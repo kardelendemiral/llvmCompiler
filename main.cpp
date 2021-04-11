@@ -6,8 +6,99 @@
 #include <stdio.h>
 #include <string.h>
 #include <cstring>
+#include <stack>
+#include <queue>
 
 using namespace std;
+
+void printStack(stack<string> s){
+    stack<string> tmp;
+    while(!s.empty()){
+        tmp.push(s.top());
+        s.pop();
+    }
+    while(!tmp.empty()){
+        cout << tmp.top() <<" ";
+        tmp.pop();
+    }
+}
+void printStack(stack<char> s){
+    stack<char> tmp;
+    while(!s.empty()){
+        tmp.push(s.top());
+        s.pop();
+    }
+    while(!tmp.empty()){
+        cout << tmp.top() <<" ";
+        tmp.pop();
+    }
+}
+
+int precedence ( char a ){
+    if(a == '+' || a =='-'){
+        return 1;
+    }
+
+    if(a == '*' || a =='/'){
+        return 2;
+    }
+    return 0;
+}
+stack<string> infixToPostfix(string s){
+    stack<string> output;
+    stack<char> tmp;
+
+    for(int i=0;i<s.length();i++){
+        //cout << s[i] << endl;
+        bool integer=false;
+        int length=0;
+        int j=i;
+        while(s[j]!='('&& s[j]!=')'&& s[j]!='*'&&s[j]!='+'&&s[j]!='/'&&s[j]!='-'){
+            integer=true;
+            length++;
+            j++;
+        }
+        if(integer){
+            string operand;
+            operand=s.substr(i,length);
+            output.push(operand);
+            //cout << operand<< " "<< i<< " " <<j << endl;
+            i=j-1;
+        } else if(s[i]=='('){
+            tmp.push('(');
+        } else if(s[i]==')'){
+            while(!tmp.empty() && tmp.top()!='('){
+                string a(1, tmp.top());
+                //cout<< "outputa koydum: " << a<< endl;
+                output.push(a);
+                tmp.pop();
+            }
+            tmp.pop();
+        } else {
+           if(tmp.empty()){
+               tmp.push(s[i]);
+           } else {
+               while(!tmp.empty()&& precedence(s[i])<=precedence(tmp.top())){
+                   string a(1,tmp.top());
+                   output.push(a);
+                   tmp.pop();
+               }
+               tmp.push(s[i]);
+           }
+        }
+        /*cout << i << ": " << "tmp: ";
+        printStack(tmp);
+        cout << "output: ";
+        printStack(output);
+        cout << endl;*/
+    }
+    while(!tmp.empty()){
+        string a(1,tmp.top());
+        output.push(a);
+        tmp.pop();
+    }
+    return output;
+}
 
 int main(int argc, char* argv[]) {
 
@@ -19,6 +110,9 @@ int main(int argc, char* argv[]) {
 
     infile.open(infileName);
     outfile.open(outfileName);
+
+    /*stack<string> s=infixToPostfix("(15+2)*3-4");
+    printStack(s);*/
 
     vector<string> vars; //variable'lar bu vectorde hep
     bool syntaxError=false;
@@ -85,13 +179,17 @@ int main(int argc, char* argv[]) {
 
             if(sol.find(" ")!=-1){
                 syntaxError=true;
-                cout << "ERROR";
+                cout << "ERROR" << endl;
+            }
+            if(sol.length()==0||sag.length()==0){
+                syntaxError=true;
+                cout << "ERROR" << endl;
             }
 
             if(sag.find("+")==-1 &&sag.find("-")==-1&&sag.find("*")==-1&&sag.find("/")==-1){ //toplama vs yoksa
                 if(sag.find(" ")!=-1){ //islem yoksa sag tarafta sadece bi sey vardir. sondaki ve bastaki boslukları sildiğimiz için bosluk varsa error
                     syntaxError=true;
-                    cout << "ERROR";
+                    cout << "ERROR" << endl;
                 }
 
                 for(int i=0; i<sag.length();i++){
@@ -105,6 +203,7 @@ int main(int argc, char* argv[]) {
                 }
             }
             //ASIL KABUS BURADA BASLIYOR :(((
+
 
 
 
