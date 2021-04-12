@@ -278,13 +278,16 @@ int main(int argc, char* argv[]) {
                         x2=whitespace(x2);
 
                         operation(x1,x2,op,tempno,vars,outfile);
-                        outfile<<"store i32 %t"<<tempno<<", i32* %";
-                        tempno++;
+
                         if(s.empty()){
+                            outfile<<"store i32 %t"<<tempno<<", i32* %";
+                            tempno++;
                             string sol=line.substr(0,found);
                             sol=whitespace(sol);
                             outfile<<sol<<endl;
                         }else{
+                            outfile<<"load i32 %t"<<tempno<<", i32* %";
+                            tempno++;
                             outfile<<"t"<<tempno<<endl;
                             string n="%t"+to_string(tempno);
                             s.push(n);
