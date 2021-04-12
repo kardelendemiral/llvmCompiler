@@ -117,9 +117,9 @@ string whitespace(string x){ //whitespaceleri siliyo sağdan ve soldan, çok ger
     return x;
 }
 
-void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofstream& outfile){  //outfile yapamadım ondan cout suan
-        bool xb=false;
-        bool xi=false;
+void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofstream& outfile){
+        bool xb=false;  //x2 vectordeyse true oluyo ki tekrar yazmasın
+        bool xi=false;  //x1    "          "       "    "       "
 
         int ini=tempno;
         if(op=="+"){
@@ -131,19 +131,20 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
         }if(op=="/"){
         op="div";
         }
-        //cout<<"x1:"<<x1<<"x2:"<<x2<<endl;
+        //cout<<"x1: "<<x1<<"x2: "<<x2<<endl;
+    if(find(var.begin(),var.end(),x2)!=var.end()){ //eğer vectorde varsa int değil
+        outfile<<"%t"<<ini<<" = load i32* %"<<x2<<endl;
+        xi=true;
+        ini++;
+    }
         if(count(var.begin(),var.end(),x1)){ //eğer vectorde varsa int değil demektir başında % olacak
             outfile<<"%t"<<ini<<" = load i32* %"<<x1<<endl;
             xb=true;
             ini++;
         }
-        if(find(var.begin(),var.end(),x2)!=var.end()){
-            outfile<<"%t"<<ini<<" = load i32* %"<<x2<<endl;
-            xi=true;
-            ini++;
-        }
 
-        outfile<<"%t"<<ini<<" = "<< op <<" i32 ";
+
+        outfile<<"%t"<<ini<<" = "<< op <<" i32 "; //add sub vs yazılıyo
         if(xi==true){  //bunların hepsi int ise % yazmaması gerektiği için yazıldı
             outfile<<"%t"<<tempno<<", ";  //çok uzun saçma bi kod oldu ben mal mıyım :(
             tempno++;
@@ -261,42 +262,36 @@ int main(int argc, char* argv[]) {
             }
 
             else{  // t=t-1 vs
-                stack<string> s=tepetaklak(infixToPostfix(sag));
-                stack<string> t;
-               // cout<<"stack:";
-               // printStack(s);
-                //cout<<endl;
+                stack<string> s=tepetaklak(infixToPostfix(sag)); //stack i ters çevirmem gerekti doğru sırayla poplamak için
+                stack<string> t; //temporary bir stack bu operator gelene kadar popladıklarımızı burda tutuyoz operator bulunca geri 2 tane popluyoz
+
                 while(!s.empty()){
-                    if(s.top()=="+" || s.top()=="*" || s.top()=="/" || s.top()=="-"){
+                    if(s.top()=="+" || s.top()=="*" || s.top()=="/" || s.top()=="-"){ //eğer operator bulursa tempteki 2 taneyi poplayacak
                         string op=s.top();
                         s.pop();
                         string x1=t.top();
                         t.pop();
                         string x2=t.top();
                         t.pop();
-                        x1=whitespace(x1);
-                        x2=whitespace(x2);
+                        x1=whitespace(x1); //bunlarsız boku yiyoruz
+                        x2=whitespace(x2); //    "      "      "
 
-                        operation(x1,x2,op,tempno,vars,outfile);
+                        operation(x1,x2,op,tempno,vars,outfile);//bunu yukarda açıklıyom add falan yazdırılan kısım bu
 
-                        if(s.empty()){
+                        if(s.empty()){//eğer stack boşaldıysa sağ tarafta bir şey kalmamış demektir ve sol tarafa store ediyoruz
                             outfile<<"store i32 %t"<<tempno<<", i32* %";
                             tempno++;
-                            string sol=line.substr(0,found);
+                            string sol=line.substr(0,found); // buralar hep yazdırma kısmı
                             sol=whitespace(sol);
                             outfile<<sol<<endl;
-                        }else{
-                            outfile<<"load i32 %t"<<tempno<<", i32* %";
-                            tempno++;
-                            outfile<<"t"<<tempno<<endl;
-                            string n="%t"+to_string(tempno);
-                            s.push(n);
+                        }else{ //daha stack boşalmadığı için devam
+                            string n="%t"+to_string(tempno); //buralar hep yazdırma kısmı
+                            s.push(n); //vectore yeni variable ımızı pushladık
                             tempno++;
 
                         }
 
-
-                    }else{
+                    }else{ // operator değilse temp e pushluyoruz
                         t.push(s.top());
                         s.pop();
 
