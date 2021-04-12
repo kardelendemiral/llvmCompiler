@@ -41,6 +41,16 @@ void printStack(stack<char> s){
     }
 }
 
+string whitespace(string x){ //whitespaceleri siliyo sağdan ve soldan, çok gerekcek diye methoda geçirdim
+    while(x[0]==' '){  //bastaki boslukları sil
+        x=x.substr(1);
+    }
+    while(x[x.size()-1]==' '){  //sondaki boslukları sil
+        x=x.substr(0,x.size()-1);
+    }
+    return x;
+}
+
 int precedence ( char a ){
     if(a == '+' || a =='-'){
         return 1;
@@ -54,6 +64,38 @@ int precedence ( char a ){
 stack<string> infixToPostfix(string s){
     stack<string> output;
     stack<char> tmp;
+
+    s=whitespace(s);
+
+    if(s[0]=='-'){
+        s="0-"+s.substr(1);
+    }
+    char last =s[0];
+    for(int i=1;i<s.length()-1;i++){
+        if(s[i]==' '){
+            continue;
+        }
+        if(last=='*' || last=='-'|| last=='+'|| last=='/'|| last=='('){
+            if(s[i]=='-'){
+                int length=0;
+                int j=i+1;
+                while(j<s.length()&&s[j]>=48 && s[j]<=57){
+                    length++;
+                    j++;
+                }
+                string sol=s.substr(0,i);
+                string sag=s.substr(j);
+                string sayi=s.substr(i+1,length);
+                s=sol+"(0-"+sayi+")"+sag;
+                i=i+3;
+            }
+
+        }
+        last=s[i];
+    }
+
+    //cout << "string: " <<s << endl;
+
 
     for(int i=0;i<s.length();i++){
         //cout << s[i] << endl;
@@ -107,56 +149,46 @@ stack<string> infixToPostfix(string s){
     return output;
 }
 
-string whitespace(string x){ //whitespaceleri siliyo sağdan ve soldan, çok gerekcek diye methoda geçirdim
-    while(x[0]==' '){  //bastaki boslukları sil
-        x=x.substr(1);
-    }
-    while(x[x.size()-1]==' '){  //sondaki boslukları sil
-        x=x.substr(0,x.size()-1);
-    }
-    return x;
-}
-
 void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofstream& outfile){
-        bool xb=false;  //x2 vectordeyse true oluyo ki tekrar yazmasın
-        bool xi=false;  //x1    "          "       "    "       "
+    bool xb=false;  //x2 vectordeyse true oluyo ki tekrar yazmasın
+    bool xi=false;  //x1    "          "       "    "       "
 
-        int ini=tempno;
-        if(op=="+"){
-            op="add";
-        }if(op=="-"){
+    int ini=tempno;
+    if(op=="+"){
+        op="add";
+    }if(op=="-"){
         op="sub";
-        }if(op=="*"){
+    }if(op=="*"){
         op="mul";
-        }if(op=="/"){
+    }if(op=="/"){
         op="div";
-        }
-        //cout<<"x1: "<<x1<<"x2: "<<x2<<endl;
+    }
+    //cout<<"x1: "<<x1<<"x2: "<<x2<<endl;
     if(find(var.begin(),var.end(),x2)!=var.end()){ //eğer vectorde varsa int değil
         outfile<<"%t"<<ini<<" = load i32* %"<<x2<<endl;
         xi=true;
         ini++;
     }
-        if(count(var.begin(),var.end(),x1)){ //eğer vectorde varsa int değil demektir başında % olacak
-            outfile<<"%t"<<ini<<" = load i32* %"<<x1<<endl;
-            xb=true;
-            ini++;
-        }
+    if(count(var.begin(),var.end(),x1)){ //eğer vectorde varsa int değil demektir başında % olacak
+        outfile<<"%t"<<ini<<" = load i32* %"<<x1<<endl;
+        xb=true;
+        ini++;
+    }
 
 
-        outfile<<"%t"<<ini<<" = "<< op <<" i32 "; //add sub vs yazılıyo
-        if(xi==true){  //bunların hepsi int ise % yazmaması gerektiği için yazıldı
-            outfile<<"%t"<<tempno<<", ";  //çok uzun saçma bi kod oldu ben mal mıyım :(
-            tempno++;
-        }else{
-            outfile<<x2<<", ";
-        }
-        if(xb==true){
-            outfile<<"%t"<<tempno<<endl;
-            tempno++;
-        }else{
-            outfile<<x1<<endl;
-        }
+    outfile<<"%t"<<ini<<" = "<< op <<" i32 "; //add sub vs yazılıyo
+    if(xi==true){  //bunların hepsi int ise % yazmaması gerektiği için yazıldı
+        outfile<<"%t"<<tempno<<", ";  //çok uzun saçma bi kod oldu ben mal mıyım :(
+        tempno++;
+    }else{
+        outfile<<x2<<", ";
+    }
+    if(xb==true){
+        outfile<<"%t"<<tempno<<endl;
+        tempno++;
+    }else{
+        outfile<<x1<<endl;
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -328,14 +360,14 @@ int main(int argc, char* argv[]) {
             //ASIL KABUS BURADA BASLIYOR :(((
 
             //KABUS YARİLANDİ GİBİ SUPHANALLAH İLK DEFA GORENLER BEGENSİN
-        if(whil==true){ //while ise yazılan şeyler
-            outfile<<"%t"<<tempno<<" = icmp ne i32 %t"<<tempno-1<<", 0"<<endl; //buraya tam ne yazcağımızı anlamadım tekrar bakmak lazım
-            outfile<<"br i1 %t"<<tempno<<", label %whbody, label %whend"<<endl; //"    "    " "    "       "     "
-            outfile<<endl;
-            outfile<<"whbody:"<<endl;
-            tempno++;
+            if(whil==true){ //while ise yazılan şeyler
+                outfile<<"%t"<<tempno<<" = icmp ne i32 %t"<<tempno-1<<", 0"<<endl; //buraya tam ne yazcağımızı anlamadım tekrar bakmak lazım
+                outfile<<"br i1 %t"<<tempno<<", label %whbody, label %whend"<<endl; //"    "    " "    "       "     "
+                outfile<<endl;
+                outfile<<"whbody:"<<endl;
+                tempno++;
 
-        }
+            }
 
 
         }
