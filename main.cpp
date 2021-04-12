@@ -184,7 +184,9 @@ int main(int argc, char* argv[]) {
     while(getline(infile,line)){
 
         int found=line.find("=");
-        if(found != string::npos){
+
+        if(found != string::npos ){
+
             string s=line.substr(0,found);
             s=whitespace(s);
             if(s.find(" ")!=-1 || s.length()==0){  //namede bosluk varsa veya name yoksa error
@@ -224,24 +226,45 @@ int main(int argc, char* argv[]) {
     while(getline(infile,line)){
         int found=line.find("=");
         bool a=true;
-        if(found!=string::npos){ //ASSIGNMENT STATEMENT
+        int wh=line.find("while");
+        bool whil=false;
+
+        if(wh!=-1){//while ise
+            whil=true;
+            outfile<<endl;
+            outfile<<"whcond:"<<endl;
+
+        }
+        if(found!=string::npos|| whil== true ){ //ASSIGNMENT STATEMENT
+            string s;
+            if(whil==true){
+                int acpar=line.find("(");
+                int kappar=line.find(")");
+                s=line.substr(acpar+1,kappar-acpar-1); //parantezin içini aldım
+                s=whitespace(s);
+
+            }
             string sag=line.substr(found+1); //assignmentin sag kısmı
             string sol=line.substr(0,found); //assignmentın sol kısmı
 
             sag=whitespace(sag);
             sol=whitespace(sol);
+            if(whil==true){
+                sag=s; //assingmentta sagdaki işlemlerin aynısını yapacağımız için sag a eşitledim
+                cout<<sag<<endl;
+            }
 
             if(sol.find(" ")!=-1 || sol.length()==0 || sag.length()==0 ){ // hiçbişey yazmıyosa veya boşluk varsa error
                 syntaxError=true;
                 cout << "ERROR";
-                continue;
+
             }
 
             if(sag.find("+")==-1 &&sag.find("-")==-1&&sag.find("*")==-1&&sag.find("/")==-1){ //toplama vs yoksa
                 if(sag.find(" ")!=-1){ //islem yoksa sag tarafta sadece bi sey vardir. sondaki ve bastaki boslukları sildiğimiz için bosluk varsa error
                     syntaxError=true;
                     cout << "ERROR";
-                    continue;
+
                 }
 
                 for(int i=0; i<sag.length();i++){
@@ -250,7 +273,9 @@ int main(int argc, char* argv[]) {
 
                         a=false;
                         outfile<<"%t"<<tempno<<" = load i32* %"<<sag<<endl;
-                        outfile<<"store i32 %t"<<tempno<<", i32* %"<<sol<<endl;
+                        if(whil==false){ //whileda bunu yazdırmıyoz
+                            outfile<<"store i32 %t"<<tempno<<", i32* %"<<sol<<endl;
+                        }
                         tempno++;
                     }
                 }
@@ -278,13 +303,15 @@ int main(int argc, char* argv[]) {
 
                         operation(x1,x2,op,tempno,vars,outfile);//bunu yukarda açıklıyom add falan yazdırılan kısım bu
 
-                        if(s.empty()){//eğer stack boşaldıysa sağ tarafta bir şey kalmamış demektir ve sol tarafa store ediyoruz
+                        if(s.empty() && whil== false){//eğer stack boşaldıysa sağ tarafta bir şey kalmamış demektir ve sol tarafa store ediyoruz
+                            //whileda yapmıyoz bu kısmı da
                             outfile<<"store i32 %t"<<tempno<<", i32* %";
                             tempno++;
                             string sol=line.substr(0,found); // buralar hep yazdırma kısmı
                             sol=whitespace(sol);
                             outfile<<sol<<endl;
                         }else{ //daha stack boşalmadığı için devam
+
                             string n="%t"+to_string(tempno); //buralar hep yazdırma kısmı
                             s.push(n); //vectore yeni variable ımızı pushladık
                             tempno++;
@@ -301,15 +328,22 @@ int main(int argc, char* argv[]) {
             //ASIL KABUS BURADA BASLIYOR :(((
 
             //KABUS YARİLANDİ GİBİ SUPHANALLAH İLK DEFA GORENLER BEGENSİN
+        if(whil==true){ //while ise yazılan şeyler
+            outfile<<"%t"<<tempno<<" = icmp ne i32 %t"<<tempno-1<<", 0"<<endl; //buraya tam ne yazcağımızı anlamadım tekrar bakmak lazım
+            outfile<<"br i1 %t"<<tempno<<", label %whbody, label %whend"<<endl; //"    "    " "    "       "     "
+            outfile<<endl;
+            outfile<<"whbody:"<<endl;
+            tempno++;
 
+        }
 
 
         }
 
 
-        if(line.find("while")!=-1){ //while
-            //muthis bi ilerleme kaydettim fark ettiysen while bitmek üzere
-        }
+
+
+
 
     }
 
