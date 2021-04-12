@@ -117,7 +117,7 @@ string whitespace(string x){ //whitespaceleri siliyo sağdan ve soldan, çok ger
     return x;
 }
 
-void operation(string x1,string x2, string op,int& tempno,vector<string> var){  //outfile yapamadım ondan cout suan
+void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofstream& outfile){  //outfile yapamadım ondan cout suan
         bool xb=false;
         bool xi=false;
 
@@ -133,28 +133,28 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var){  
         }
         //cout<<"x1:"<<x1<<"x2:"<<x2<<endl;
         if(count(var.begin(),var.end(),x1)){ //eğer vectorde varsa int değil demektir başında % olacak
-            cout<<"%t"<<ini<<" = load i32* %"<<x1<<endl;
+            outfile<<"%t"<<ini<<" = load i32* %"<<x1<<endl;
             xb=true;
             ini++;
         }
         if(find(var.begin(),var.end(),x2)!=var.end()){
-            cout<<"%t"<<ini<<" = load i32* %"<<x2<<endl;
+            outfile<<"%t"<<ini<<" = load i32* %"<<x2<<endl;
             xi=true;
             ini++;
         }
 
-        cout<<"%t"<<ini<<" = "<< op <<" i32 ";
+        outfile<<"%t"<<ini<<" = "<< op <<" i32 ";
         if(xi==true){  //bunların hepsi int ise % yazmaması gerektiği için yazıldı
-            cout<<"%t"<<tempno<<", ";  //çok uzun saçma bi kod oldu ben mal mıyım :(
+            outfile<<"%t"<<tempno<<", ";  //çok uzun saçma bi kod oldu ben mal mıyım :(
             tempno++;
         }else{
-            cout<<x2<<", ";
+            outfile<<x2<<", ";
         }
         if(xb==true){
-            cout<<"%t"<<tempno<<endl;
+            outfile<<"%t"<<tempno<<endl;
             tempno++;
         }else{
-            cout<<x1<<endl;
+            outfile<<x1<<endl;
         }
 }
 
@@ -171,7 +171,7 @@ int main(int argc, char* argv[]) {
 
     vector<string> vars; //variable'lar bu vectorde hep
     bool syntaxError=false;
-    int tempno=0;
+    int tempno=1;
 
     outfile << "; ModuleID = 'mylang2ir'\n"
                "declare i32 @printf(i8*, ...)\n"
@@ -245,16 +245,22 @@ int main(int argc, char* argv[]) {
 
                 for(int i=0; i<sag.length();i++){
                     if(sag.at(i)<48 || sag.at(i)>57 ){ // [0-9] değilse çıkıyo (ascii tablo şeyi)
+                        // t=f0 falan burda
+
                         a=false;
-                        break;
+                        outfile<<"%t"<<tempno<<" = load i32* %"<<sag<<endl;
+                        outfile<<"store i32 %t"<<tempno<<", i32* %"<<sol<<endl;
+                        tempno++;
                     }
                 }
                 if(a==true){ //[0-9] ve toplama vs yok
+                    // t= 1 vs
                     outfile<<"store i32 "<<sag<<", i32* %"<<sol<<endl;
+
                 }
             }
 
-            else{
+            else{  // t=t-1 vs
                 stack<string> s=tepetaklak(infixToPostfix(sag));
                 stack<string> t;
                // cout<<"stack:";
@@ -271,15 +277,15 @@ int main(int argc, char* argv[]) {
                         x1=whitespace(x1);
                         x2=whitespace(x2);
 
-                        operation(x1,x2,op,tempno,vars);
-                        cout<<"store i32 %t"<<tempno<<", i32* %";
+                        operation(x1,x2,op,tempno,vars,outfile);
+                        outfile<<"store i32 %t"<<tempno<<", i32* %";
                         tempno++;
                         if(s.empty()){
                             string sol=line.substr(0,found);
                             sol=whitespace(sol);
-                            cout<<sol<<endl;
+                            outfile<<sol<<endl;
                         }else{
-                            cout<<"t"<<tempno<<endl;
+                            outfile<<"t"<<tempno<<endl;
                             string n="%t"+to_string(tempno);
                             s.push(n);
                             tempno++;
