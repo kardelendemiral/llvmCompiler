@@ -51,6 +51,17 @@ string whitespace(string x){ //whitespaceleri siliyo sağdan ve soldan, çok ger
     return x;
 }
 
+bool isInt(string s){
+    s=whitespace(s);
+    for(int i=0;i<s.length();i++){
+        if(s.at(i)<48 || s.at(i)>57){
+            return false;
+        }
+    }
+    return true;
+}
+
+
 int precedence ( char a ){
     if(a == '+' || a =='-'){
         return 1;
@@ -61,48 +72,25 @@ int precedence ( char a ){
     }
     return 0;
 }
-stack<string> infixToPostfix(string s){
+stack<string> infixToPostfix(string str){
     stack<string> output;
     stack<char> tmp;
 
-    s=whitespace(s);
+    string s="";
 
-    if(s[0]=='-'){
-        s="0-"+s.substr(1);
-    }
-    char last =s[0];
-    for(int i=1;i<s.length()-1;i++){
-        if(s[i]==' '){
-            continue;
+    for(int i=0;i<str.length();i++){
+        if(str[i]!=' '){
+            s=s+str[i];
         }
-        if(last=='*' || last=='-'|| last=='+'|| last=='/'|| last=='('){
-            if(s[i]=='-'){
-                int length=0;
-                int j=i+1;
-                while(j<s.length()&&s[j]>=48 && s[j]<=57){
-                    length++;
-                    j++;
-                }
-                string sol=s.substr(0,i);
-                string sag=s.substr(j);
-                string sayi=s.substr(i+1,length);
-                s=sol+"(0-"+sayi+")"+sag;
-                i=i+3;
-            }
-
-        }
-        last=s[i];
     }
-
-    //cout << "string: " <<s << endl;
-
+    cout << str;
 
     for(int i=0;i<s.length();i++){
         //cout << s[i] << endl;
         bool integer=false;
         int length=0;
         int j=i;
-        while(s[j]!='('&& s[j]!=')'&& s[j]!='*'&&s[j]!='+'&&s[j]!='/'&&s[j]!='-'){
+        while(s[j]!='('&& s[j]!=')'&& s[j]!='*'&&s[j]!='+'&&s[j]!='/'&&s[j]!='-'&&j<s.length()){
             integer=true;
             length++;
             j++;
@@ -146,11 +134,12 @@ stack<string> infixToPostfix(string s){
         output.push(a);
         tmp.pop();
     }
+    cout <<"çıktım "<<endl;
     return output;
 }
 
 void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofstream& outfile){
-    bool xb=false;  //x2 vectordeyse true oluyo ki tekrar yazmasın
+    bool xb=false;  //{x2 vectordeyse true oluyo ki tekrar yazmasın
     bool xi=false;  //x1    "          "       "    "       "
 
     int ini=tempno;
@@ -163,7 +152,7 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
     }if(op=="/"){
         op="div";
     }
-    //cout<<"x1: "<<x1<<"x2: "<<x2<<endl;
+    cout<<"x1: "<<x1<<"x2: "<<x2<<endl;
     if(find(var.begin(),var.end(),x2)!=var.end()){ //eğer vectorde varsa int değil
         outfile<<"%t"<<ini<<" = load i32* %"<<x2<<endl;
         xi=true;
@@ -210,6 +199,7 @@ int main(int argc, char* argv[]) {
                "declare i32 @printf(i8*, ...)\n"
                "@print.str = constant [4 x i8] c\"%d\\0A\\00\"" << endl << endl;
     outfile<<"define i32 @main() {"<<endl;
+    outfile<< endl;
 
     string line;
 
@@ -218,29 +208,14 @@ int main(int argc, char* argv[]) {
         int found=line.find("=");
 
         if(found != string::npos ){
-
             string s=line.substr(0,found);
             s=whitespace(s);
-            if(s.find(" ")!=-1 || s.length()==0){  //namede bosluk varsa veya name yoksa error
-                cout<<"ERROR"<<endl;
-                continue;
-            }else{
-
-                if(!count(vars.begin(), vars.end(), s)){ //variable vectorde yoksa vektore ekleyip allocate ediyoz
-                    vars.push_back(s);
-
-                    outfile << "%" << s <<" = alloca i32" << endl;
-
-                }
-
+            if(!count(vars.begin(), vars.end(), s)){ //variable vectorde yoksa vektore ekleyip allocate ediyoz
+                vars.push_back(s);
+                outfile << "%" << s <<" = alloca i32" << endl;
             }
-
-
-
         }
-
     }
-
     outfile << endl;
 
     for(int i=0;i<vars.size();i++){
@@ -253,74 +228,92 @@ int main(int argc, char* argv[]) {
     infile.clear(); //burda file'ı okuduk bitti tekrar başlamak istiyoz o yüzden bu satırları yazmam gerekti
     infile.seekg(0, infile.beg);
 
+    bool inWhile=false;
+    bool inIf=false;
+
     //BISMILLAHIRRAHMANIRRAHIM ALLAH CC HELP US IF YOU EXIST
     //dunyanın en basıc kodunu gormeye hazır ol <3
     while(getline(infile,line)){
         int found=line.find("=");
-        bool a=true;
-        int wh=line.find("while");
         bool whil=false;
+        bool ifSt=false;
+        bool printSt=false;
+        bool assignment=false;
 
-        if(wh!=-1){//while ise
-            whil=true;
-            outfile<<endl;
-            outfile<<"whcond:"<<endl;
-
+        if(found!=string::npos){
+            assignment=true;
         }
-        if(found!=string::npos|| whil== true ){ //ASSIGNMENT STATEMENT
+
+        if(whitespace(line)=="}"&&inWhile){ //while'ın içindeysek ve while bittiyse
+            outfile << "br label %whcond" << endl;
+            outfile << endl;
+            outfile << "whend:" << endl << endl;
+            inWhile=false;
+        }
+
+        if(whitespace(line)=="}"&&inIf){ //while'ın içindeysek ve while bittiyse
+            inIf=false;
+        }
+
+        if(line.find("while")!=-1){//while ise
+            whil=true;
+            inWhile=true;
+            outfile<<endl;
+            outfile << "br label %whcond" << endl;
+            outfile<<"whcond:"<<endl;
+        }
+        if(line.find("print")!=-1){ //print ise
+            printSt=true;
+        }
+
+        if(line.find("if")!=-1){ //print ise
+            ifSt=true;
+            inIf=true;
+        }
+
+        if(assignment || whil || printSt || ifSt){
             string s;
-            if(whil==true){
+            string expr;
+            string sol;
+            if(whil || printSt || ifSt){
                 int acpar=line.find("(");
-                int kappar=line.find(")");
-                s=line.substr(acpar+1,kappar-acpar-1); //parantezin içini aldım
-                s=whitespace(s);
+                int kappar=line.find_last_of(")");
+                expr=line.substr(acpar+1,kappar-acpar-1); //parantezin içini aldım
+                expr=whitespace(expr);
+                cout << expr << endl;
 
-            }
-            string sag=line.substr(found+1); //assignmentin sag kısmı
-            string sol=line.substr(0,found); //assignmentın sol kısmı
-
-            sag=whitespace(sag);
-            sol=whitespace(sol);
-            if(whil==true){
-                sag=s; //assingmentta sagdaki işlemlerin aynısını yapacağımız için sag a eşitledim
-                cout<<sag<<endl;
+            } else {
+                expr=line.substr(found+1); //assignmentin expr kısmı
+                sol=line.substr(0,found); //assignmentın sol kısmı
+                expr=whitespace(expr);
+                sol=whitespace(sol);
             }
 
-            if(sol.find(" ")!=-1 || sol.length()==0 || sag.length()==0 ){ // hiçbişey yazmıyosa veya boşluk varsa error
-                syntaxError=true;
-                cout << "ERROR";
-
-            }
-
-            if(sag.find("+")==-1 &&sag.find("-")==-1&&sag.find("*")==-1&&sag.find("/")==-1){ //toplama vs yoksa
-                if(sag.find(" ")!=-1){ //islem yoksa sag tarafta sadece bi sey vardir. sondaki ve bastaki boslukları sildiğimiz için bosluk varsa error
-                    syntaxError=true;
-                    cout << "ERROR";
-
-                }
-
-                for(int i=0; i<sag.length();i++){
-                    if(sag.at(i)<48 || sag.at(i)>57 ){ // [0-9] değilse çıkıyo (ascii tablo şeyi)
-                        // t=f0 falan burda
-
-                        a=false;
-                        outfile<<"%t"<<tempno<<" = load i32* %"<<sag<<endl;
-                        if(whil==false){ //whileda bunu yazdırmıyoz
-                            outfile<<"store i32 %t"<<tempno<<", i32* %"<<sol<<endl;
-                        }
-                        tempno++;
+            if(expr.find("+")==-1 &&expr.find("-")==-1&&expr.find("*")==-1&&expr.find("/")==-1){ //toplama vs yoksa
+                cout << "buraya girdi1"<< endl;
+                if(!isInt(expr)){ // [0-9] değilse t=f0 falan burda
+                    outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl;
+                    if(assignment){
+                        outfile<<"store i32 %t"<<tempno<<", i32* %"<<sol<<endl;
+                    }
+                    if(printSt){
+                        outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 %t" << tempno <<" )"<<endl;
+                        printSt=false;
+                    }
+                    tempno++;
+                } else { //t=5 falan
+                    if(assignment){
+                        outfile<<"store i32 "<<expr<<", i32* %"<<sol<<endl;
+                    } else if(printSt) {
+                        outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " << expr <<" )"<<endl;
+                        printSt=false;
                     }
                 }
-                if(a==true){ //[0-9] ve toplama vs yok
-                    // t= 1 vs
-                    outfile<<"store i32 "<<sag<<", i32* %"<<sol<<endl;
-
-                }
-            }
-
-            else{  // t=t-1 vs
-                stack<string> s=tepetaklak(infixToPostfix(sag)); //stack i ters çevirmem gerekti doğru sırayla poplamak için
+            } else {// t=t-1 vs
+                cout << "buraya girdi2"<< endl;
+                stack<string> s=tepetaklak(infixToPostfix(expr)); //stack i ters çevirmem gerekti doğru sırayla poplamak için
                 stack<string> t; //temporary bir stack bu operator gelene kadar popladıklarımızı burda tutuyoz operator bulunca geri 2 tane popluyoz
+                printStack(s);
 
                 while(!s.empty()){
                     if(s.top()=="+" || s.top()=="*" || s.top()=="/" || s.top()=="-"){ //eğer operator bulursa tempteki 2 taneyi poplayacak
@@ -335,19 +328,17 @@ int main(int argc, char* argv[]) {
 
                         operation(x1,x2,op,tempno,vars,outfile);//bunu yukarda açıklıyom add falan yazdırılan kısım bu
 
-                        if(s.empty() && whil== false){//eğer stack boşaldıysa sağ tarafta bir şey kalmamış demektir ve sol tarafa store ediyoruz
+                        if(s.empty() && assignment){//eğer stack boşaldıysa sağ tarafta bir şey kalmamış demektir ve sol tarafa store ediyoruz
                             //whileda yapmıyoz bu kısmı da
                             outfile<<"store i32 %t"<<tempno<<", i32* %";
                             tempno++;
                             string sol=line.substr(0,found); // buralar hep yazdırma kısmı
                             sol=whitespace(sol);
                             outfile<<sol<<endl;
-                        }else{ //daha stack boşalmadığı için devam
-
+                        } else  { //daha stack boşalmadığı için devam
                             string n="%t"+to_string(tempno); //buralar hep yazdırma kısmı
                             s.push(n); //vectore yeni variable ımızı pushladık
                             tempno++;
-
                         }
 
                     }else{ // operator değilse temp e pushluyoruz
@@ -357,30 +348,21 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
-            //ASIL KABUS BURADA BASLIYOR :(((
 
-            //KABUS YARİLANDİ GİBİ SUPHANALLAH İLK DEFA GORENLER BEGENSİN
-            if(whil==true){ //while ise yazılan şeyler
+            if(whil){ //while ise yazılan şeyler
                 outfile<<"%t"<<tempno<<" = icmp ne i32 %t"<<tempno-1<<", 0"<<endl; //buraya tam ne yazcağımızı anlamadım tekrar bakmak lazım
                 outfile<<"br i1 %t"<<tempno<<", label %whbody, label %whend"<<endl; //"    "    " "    "       "     "
                 outfile<<endl;
                 outfile<<"whbody:"<<endl;
                 tempno++;
-
+            } else if(printSt){
+                outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " <<"%t" << tempno<<" )"<<endl;
             }
-
-
         }
-
-
-
-
-
-
     }
 
-
-
+    outfile << "ret i32 0" << endl;
+    outfile << "}";
 
     return 0;
 }
