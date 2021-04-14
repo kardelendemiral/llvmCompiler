@@ -297,6 +297,7 @@ int main(int argc, char* argv[]) {
                     outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl;
                     if(assignment){
                         outfile<<"store i32 %t"<<tempno<<", i32* %"<<sol<<endl;
+                        assignment=false;
                     }
                     if(printSt){
                         outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 %t" << tempno <<" )"<<endl;
@@ -306,6 +307,7 @@ int main(int argc, char* argv[]) {
                 } else { //t=5 falan
                     if(assignment){
                         outfile<<"store i32 "<<expr<<", i32* %"<<sol<<endl;
+                        assignment=false;
                     } else if(printSt) {
                         outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " << expr <<" )"<<endl;
                         printSt=false;
@@ -329,19 +331,11 @@ int main(int argc, char* argv[]) {
 
                         operation(x1,x2,op,tempno,vars,outfile);//bunu yukarda açıklıyom add falan yazdırılan kısım bu
 
-                        if(s.empty() && assignment){//eğer stack boşaldıysa sağ tarafta bir şey kalmamış demektir ve sol tarafa store ediyoruz
-                            //whileda yapmıyoz bu kısmı da
-                            outfile<<"store i32 %t"<<tempno<<", i32* %";
-                            tempno++;
-                            string sol=line.substr(0,found); // buralar hep yazdırma kısmı
-                            sol=whitespace(sol);
-                            outfile<<sol<<endl;
-                        } else  { //daha stack boşalmadığı için devam
+                        if(!s.empty()){
                             string n="%t"+to_string(tempno); //buralar hep yazdırma kısmı
                             s.push(n); //vectore yeni variable ımızı pushladık
                             tempno++;
                         }
-
                     }else{ // operator değilse temp e pushluyoruz
                         t.push(s.top());
                         s.pop();
@@ -363,6 +357,12 @@ int main(int argc, char* argv[]) {
                 outfile<<"br i1 %t"<<tempno<<", label %ifbody, label %ifend"<<endl;
                 outfile << endl;
                 outfile << "ifbody:" << endl;
+            } else if(assignment){
+                outfile<<"store i32 %t"<<tempno<<", i32* %";
+                tempno++;
+                string sol=line.substr(0,found); // buralar hep yazdırma kısmı
+                sol=whitespace(sol);
+                outfile<<sol<<endl;
             }
         }
     }
