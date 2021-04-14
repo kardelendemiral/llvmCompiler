@@ -252,6 +252,7 @@ int main(int argc, char* argv[]) {
         }
 
         if(whitespace(line)=="}"&&inIf){ //while'ın içindeysek ve while bittiyse
+            outfile << "ifend:" << endl;
             inIf=false;
         }
 
@@ -267,6 +268,8 @@ int main(int argc, char* argv[]) {
         }
 
         if(line.find("if")!=-1){ //print ise
+            outfile << "br label %ifcond" << endl;
+            outfile << "ifcond:" << endl;
             ifSt=true;
             inIf=true;
         }
@@ -290,8 +293,7 @@ int main(int argc, char* argv[]) {
             }
 
             if(expr.find("+")==-1 &&expr.find("-")==-1&&expr.find("*")==-1&&expr.find("/")==-1){ //toplama vs yoksa
-                cout << "buraya girdi1"<< endl;
-                if(!isInt(expr)){ // [0-9] değilse t=f0 falan burda
+                if(!isInt(expr)){ //  t=f0 falan burda
                     outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl;
                     if(assignment){
                         outfile<<"store i32 %t"<<tempno<<", i32* %"<<sol<<endl;
@@ -310,7 +312,6 @@ int main(int argc, char* argv[]) {
                     }
                 }
             } else {// t=t-1 vs
-                cout << "buraya girdi2"<< endl;
                 stack<string> s=tepetaklak(infixToPostfix(expr)); //stack i ters çevirmem gerekti doğru sırayla poplamak için
                 stack<string> t; //temporary bir stack bu operator gelene kadar popladıklarımızı burda tutuyoz operator bulunca geri 2 tane popluyoz
                 printStack(s);
@@ -357,6 +358,11 @@ int main(int argc, char* argv[]) {
                 tempno++;
             } else if(printSt){
                 outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " <<"%t" << tempno<<" )"<<endl;
+            } else if(ifSt){
+                outfile<<"%t"<<tempno<<" = icmp ne i32 %t"<<tempno-1<<", 0"<<endl;
+                outfile<<"br i1 %t"<<tempno<<", label %ifbody, label %ifend"<<endl;
+                outfile << endl;
+                outfile << "ifbody:" << endl;
             }
         }
     }
