@@ -83,7 +83,7 @@ stack<string> infixToPostfix(string str){
             s=s+str[i];
         }
     }
-    cout << str;
+   // cout << str;
 
     for(int i=0;i<s.length();i++){
         //cout << s[i] << endl;
@@ -134,7 +134,7 @@ stack<string> infixToPostfix(string str){
         output.push(a);
         tmp.pop();
     }
-    cout <<"çıktım "<<endl;
+    //cout <<"çıktım "<<endl;
     return output;
 }
 
@@ -152,7 +152,7 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
     }if(op=="/"){
         op="div";
     }
-    cout<<"x1: "<<x1<<"x2: "<<x2<<endl;
+    //cout<<"x1: "<<x1<<"x2: "<<x2<<endl;
     if(find(var.begin(),var.end(),x2)!=var.end()){ //eğer vectorde varsa int değil
         outfile<<"%t"<<ini<<" = load i32* %"<<x2<<endl;
         xi=true;
@@ -178,6 +178,84 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
     }else{
         outfile<<x1<<endl;
     }
+}
+
+
+void muko(string expr,string sol,string line,ofstream& outfile,int& tempno,int found,bool& assignment,bool& printSt,bool& whil,bool& ifSt,vector<string> vars){
+
+    if(expr.find("+")==-1 &&expr.find("-")==-1&&expr.find("*")==-1&&expr.find("/")==-1){ //toplama vs yoksa
+        if(!isInt(expr)){ //  t=f0 falan burda
+            outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl;
+            if(assignment){
+                outfile<<"store i32 %t"<<tempno<<", i32* %"<<sol<<endl;
+                assignment=false;
+            }
+            if(printSt){
+                outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 %t" << tempno <<" )"<<endl;
+                printSt=false;
+            }
+            tempno++;
+        } else { //t=5 falan
+            if(assignment){
+                outfile<<"store i32 "<<expr<<", i32* %"<<sol<<endl;
+                assignment=false;
+            } else if(printSt) {
+                outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " << expr <<" )"<<endl;
+                printSt=false;
+            }
+        }
+    } else {// t=t-1 vs
+        stack<string> s=tepetaklak(infixToPostfix(expr)); //stack i ters çevirmem gerekti doğru sırayla poplamak için
+        stack<string> t; //temporary bir stack bu operator gelene kadar popladıklarımızı burda tutuyoz operator bulunca geri 2 tane popluyoz
+        //printStack(s);
+
+        while(!s.empty()){
+            if(s.top()=="+" || s.top()=="*" || s.top()=="/" || s.top()=="-"){ //eğer operator bulursa tempteki 2 taneyi poplayacak
+                string op=s.top();
+                s.pop();
+                string x1=t.top();
+                t.pop();
+                string x2=t.top();
+                t.pop();
+                x1=whitespace(x1); //bunlarsız boku yiyoruz
+                x2=whitespace(x2); //    "      "      "
+
+                operation(x1,x2,op,tempno,vars,outfile);//bunu yukarda açıklıyom add falan yazdırılan kısım bu
+
+                if(!s.empty()){
+                    string n="%t"+to_string(tempno); //buralar hep yazdırma kısmı
+                    s.push(n); //vectore yeni variable ımızı pushladık
+                    tempno++;
+                }
+            }else{ // operator değilse temp e pushluyoruz
+                t.push(s.top());
+                s.pop();
+
+            }
+        }
+    }
+
+    if(whil){ //while ise yazılan şeyler
+        outfile<<"%t"<<tempno<<" = icmp ne i32 %t"<<tempno-1<<", 0"<<endl; //buraya tam ne yazcağımızı anlamadım tekrar bakmak lazım
+        outfile<<"br i1 %t"<<tempno<<", label %whbody, label %whend"<<endl; //"    "    " "    "       "     "
+        outfile<<endl;
+        outfile<<"whbody:"<<endl;
+        tempno++;
+    } else if(printSt){
+        outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " <<"%t" << tempno<<" )"<<endl;
+    } else if(ifSt){
+        outfile<<"%t"<<tempno<<" = icmp ne i32 %t"<<tempno-1<<", 0"<<endl;
+        outfile<<"br i1 %t"<<tempno<<", label %ifbody, label %ifend"<<endl;
+        outfile << endl;
+        outfile << "ifbody:" << endl;
+    } else if(assignment){
+        outfile<<"store i32 %t"<<tempno<<", i32* %";
+        tempno++;
+        string sol=line.substr(0,found); // buralar hep yazdırma kısmı
+        sol=whitespace(sol);
+        outfile<<sol<<endl;
+    }
+
 }
 
 int main(int argc, char* argv[]) {
@@ -251,7 +329,7 @@ int main(int argc, char* argv[]) {
             inWhile=false;
         }
 
-        if(whitespace(line)=="}"&&inIf){ //while'ın içindeysek ve while bittiyse
+        if(whitespace(line)=="}"&&inIf){ //if'in içindeysek ve if bittiyse
             outfile << "ifend:" << endl;
             inIf=false;
         }
@@ -274,6 +352,24 @@ int main(int argc, char* argv[]) {
             inIf=true;
         }
 
+        if(line.find("choose")!=-1){ //choose varsa içindekileri alcaz choose(  3,n+1 ,2,f0 )
+            int acpar=line.find("(");
+            int kappar=line.find_last_of(")");
+            string incho=line.substr(acpar+1,kappar-acpar-1);
+            char v=',';
+            int vi1=incho.find(v);    //virgul yerleri
+            int vi2=incho.find(v,vi1+1);
+            int vi3=incho.find(v,vi2+1);
+            string exp1=incho.substr(0,vi1);  //expressionları tek tek aldım
+            string exp2=incho.substr(vi1+1,vi2-vi1-1);
+            string exp3=incho.substr(vi2+1,vi3-vi2-1);
+            string exp4=incho.substr(vi3+1,kappar-vi3-1);
+            exp1=whitespace(exp1);   //buna gerek yok heralde ama yine de yapim dedim
+            exp2=whitespace(exp2);
+            exp3=whitespace(exp3);
+            exp4=whitespace(exp4);
+        }
+
         if(assignment || whil || printSt || ifSt){
             string s;
             string expr;
@@ -283,7 +379,7 @@ int main(int argc, char* argv[]) {
                 int kappar=line.find_last_of(")");
                 expr=line.substr(acpar+1,kappar-acpar-1); //parantezin içini aldım
                 expr=whitespace(expr);
-                cout << expr << endl;
+               // cout << expr << endl;
 
             } else {
                 expr=line.substr(found+1); //assignmentin expr kısmı
@@ -291,79 +387,9 @@ int main(int argc, char* argv[]) {
                 expr=whitespace(expr);
                 sol=whitespace(sol);
             }
+            muko(expr,sol,line,outfile,tempno,found,assignment,printSt,whil,ifSt,vars);
 
-            if(expr.find("+")==-1 &&expr.find("-")==-1&&expr.find("*")==-1&&expr.find("/")==-1){ //toplama vs yoksa
-                if(!isInt(expr)){ //  t=f0 falan burda
-                    outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl;
-                    if(assignment){
-                        outfile<<"store i32 %t"<<tempno<<", i32* %"<<sol<<endl;
-                        assignment=false;
-                    }
-                    if(printSt){
-                        outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 %t" << tempno <<" )"<<endl;
-                        printSt=false;
-                    }
-                    tempno++;
-                } else { //t=5 falan
-                    if(assignment){
-                        outfile<<"store i32 "<<expr<<", i32* %"<<sol<<endl;
-                        assignment=false;
-                    } else if(printSt) {
-                        outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " << expr <<" )"<<endl;
-                        printSt=false;
-                    }
-                }
-            } else {// t=t-1 vs
-                stack<string> s=tepetaklak(infixToPostfix(expr)); //stack i ters çevirmem gerekti doğru sırayla poplamak için
-                stack<string> t; //temporary bir stack bu operator gelene kadar popladıklarımızı burda tutuyoz operator bulunca geri 2 tane popluyoz
-                printStack(s);
 
-                while(!s.empty()){
-                    if(s.top()=="+" || s.top()=="*" || s.top()=="/" || s.top()=="-"){ //eğer operator bulursa tempteki 2 taneyi poplayacak
-                        string op=s.top();
-                        s.pop();
-                        string x1=t.top();
-                        t.pop();
-                        string x2=t.top();
-                        t.pop();
-                        x1=whitespace(x1); //bunlarsız boku yiyoruz
-                        x2=whitespace(x2); //    "      "      "
-
-                        operation(x1,x2,op,tempno,vars,outfile);//bunu yukarda açıklıyom add falan yazdırılan kısım bu
-
-                        if(!s.empty()){
-                            string n="%t"+to_string(tempno); //buralar hep yazdırma kısmı
-                            s.push(n); //vectore yeni variable ımızı pushladık
-                            tempno++;
-                        }
-                    }else{ // operator değilse temp e pushluyoruz
-                        t.push(s.top());
-                        s.pop();
-
-                    }
-                }
-            }
-
-            if(whil){ //while ise yazılan şeyler
-                outfile<<"%t"<<tempno<<" = icmp ne i32 %t"<<tempno-1<<", 0"<<endl; //buraya tam ne yazcağımızı anlamadım tekrar bakmak lazım
-                outfile<<"br i1 %t"<<tempno<<", label %whbody, label %whend"<<endl; //"    "    " "    "       "     "
-                outfile<<endl;
-                outfile<<"whbody:"<<endl;
-                tempno++;
-            } else if(printSt){
-                outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " <<"%t" << tempno<<" )"<<endl;
-            } else if(ifSt){
-                outfile<<"%t"<<tempno<<" = icmp ne i32 %t"<<tempno-1<<", 0"<<endl;
-                outfile<<"br i1 %t"<<tempno<<", label %ifbody, label %ifend"<<endl;
-                outfile << endl;
-                outfile << "ifbody:" << endl;
-            } else if(assignment){
-                outfile<<"store i32 %t"<<tempno<<", i32* %";
-                tempno++;
-                string sol=line.substr(0,found); // buralar hep yazdırma kısmı
-                sol=whitespace(sol);
-                outfile<<sol<<endl;
-            }
         }
     }
 
