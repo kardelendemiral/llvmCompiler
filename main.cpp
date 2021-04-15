@@ -83,7 +83,7 @@ stack<string> infixToPostfix(string str){
             s=s+str[i];
         }
     }
-   // cout << str;
+    // cout << str;
 
     for(int i=0;i<s.length();i++){
         //cout << s[i] << endl;
@@ -181,28 +181,15 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
 }
 
 
-void muko(string expr,string sol,string line,ofstream& outfile,int& tempno,int found,bool& assignment,bool& printSt,bool& whil,bool& ifSt,vector<string> vars){
+string muko(string expr,ofstream& outfile,int& tempno,vector<string> vars){
 
     if(expr.find("+")==-1 &&expr.find("-")==-1&&expr.find("*")==-1&&expr.find("/")==-1){ //toplama vs yoksa
         if(!isInt(expr)){ //  t=f0 falan burda
             outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl;
-            if(assignment){
-                outfile<<"store i32 %t"<<tempno<<", i32* %"<<sol<<endl;
-                assignment=false;
-            }
-            if(printSt){
-                outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 %t" << tempno <<" )"<<endl;
-                printSt=false;
-            }
             tempno++;
+            return "%t"+to_string(tempno-1);
         } else { //t=5 falan
-            if(assignment){
-                outfile<<"store i32 "<<expr<<", i32* %"<<sol<<endl;
-                assignment=false;
-            } else if(printSt) {
-                outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " << expr <<" )"<<endl;
-                printSt=false;
-            }
+            return expr;
         }
     } else {// t=t-1 vs
         stack<string> s=tepetaklak(infixToPostfix(expr)); //stack i ters çevirmem gerekti doğru sırayla poplamak için
@@ -233,27 +220,8 @@ void muko(string expr,string sol,string line,ofstream& outfile,int& tempno,int f
 
             }
         }
-    }
-
-    if(whil){ //while ise yazılan şeyler
-        outfile<<"%t"<<tempno<<" = icmp ne i32 %t"<<tempno-1<<", 0"<<endl; //buraya tam ne yazcağımızı anlamadım tekrar bakmak lazım
-        outfile<<"br i1 %t"<<tempno<<", label %whbody, label %whend"<<endl; //"    "    " "    "       "     "
-        outfile<<endl;
-        outfile<<"whbody:"<<endl;
         tempno++;
-    } else if(printSt){
-        outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " <<"%t" << tempno<<" )"<<endl;
-    } else if(ifSt){
-        outfile<<"%t"<<tempno<<" = icmp ne i32 %t"<<tempno-1<<", 0"<<endl;
-        outfile<<"br i1 %t"<<tempno<<", label %ifbody, label %ifend"<<endl;
-        outfile << endl;
-        outfile << "ifbody:" << endl;
-    } else if(assignment){
-        outfile<<"store i32 %t"<<tempno<<", i32* %";
-        tempno++;
-        string sol=line.substr(0,found); // buralar hep yazdırma kısmı
-        sol=whitespace(sol);
-        outfile<<sol<<endl;
+        return "%t"+to_string(tempno-1);
     }
 
 }
@@ -379,7 +347,7 @@ int main(int argc, char* argv[]) {
                 int kappar=line.find_last_of(")");
                 expr=line.substr(acpar+1,kappar-acpar-1); //parantezin içini aldım
                 expr=whitespace(expr);
-               // cout << expr << endl;
+                // cout << expr << endl;
 
             } else {
                 expr=line.substr(found+1); //assignmentin expr kısmı
@@ -387,9 +355,29 @@ int main(int argc, char* argv[]) {
                 expr=whitespace(expr);
                 sol=whitespace(sol);
             }
-            muko(expr,sol,line,outfile,tempno,found,assignment,printSt,whil,ifSt,vars);
+            string res=muko(expr,outfile,tempno,vars);
 
-
+            if(whil){ //while ise yazılan şeyler
+                outfile<<"%t"<<tempno<<" = icmp ne i32 "<<res<<", 0"<<endl; //buraya tam ne yazcağımızı anlamadım tekrar bakmak lazım
+                outfile<<"br i1 %t"<<tempno<<", label %whbody, label %whend"<<endl; //"    "    " "    "       "     "
+                outfile<<endl;
+                outfile<<"whbody:"<<endl;
+                tempno++;
+            } else if(printSt){
+                outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " << res<<" )"<<endl;
+            } else if(ifSt){
+                outfile<<"%t"<<tempno<<" = icmp ne i32 "<<res<<", 0"<<endl;
+                outfile<<"br i1 %t"<<tempno<<", label %ifbody, label %ifend"<<endl;
+                outfile << endl;
+                outfile << "ifbody:" << endl;
+                tempno++;
+            } else if(assignment){
+                outfile<<"store i32 "<<res<<", i32* %";
+                //tempno++;
+                string sol=line.substr(0,found); // buralar hep yazdırma kısmı
+                sol=whitespace(sol);
+                outfile<<sol<<endl;
+            }
         }
     }
 
