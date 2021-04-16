@@ -225,6 +225,18 @@ string muko(string expr,ofstream& outfile,int& tempno,vector<string> vars){
     }
 
 }
+bool errorCatchForExpressions(string line){
+    //bu finksiyonu asağıdaki fonksiyonun içinde çağırcaz
+    //orn print st ise icindeki expressionı buraya yollicak 5++ 3 -4//? falan diye saçmalamış mı diye bakcaz
+}
+bool errorCatch(string line){
+    int comment=line.find("#");
+    if(comment!=-1){
+        line=line.substr(0,comment); //commentli kısmı kestik attık
+    }
+    //valid lines are 1- asignment 2- empty line 3- printSt 4- if st 5- while st 6- }
+    //BUNLARDAN BIRININ SYNTAXINA UYUYO MU DIYE BAKCAZ AKSI HALDE FALSE DONCEK
+}
 
 int main(int argc, char* argv[]) {
 
@@ -320,7 +332,7 @@ int main(int argc, char* argv[]) {
             inIf=true;
         }
 
-        if(line.find("choose")!=-1){ //choose varsa içindekileri alcaz choose(  3,n+1 ,2,f0 )
+        while(line.find("choose")!=-1){ //choose varsa içindekileri alcaz choose(  3,n+1 ,2,f0 )
             int acpar=line.find("(");
             int kappar=line.find_last_of(")");
             string incho=line.substr(acpar+1,kappar-acpar-1);
@@ -336,6 +348,7 @@ int main(int argc, char* argv[]) {
             exp2=whitespace(exp2);
             exp3=whitespace(exp3);
             exp4=whitespace(exp4);
+            string res1=muko(exp1,outfile,tempno,vars);
         }
 
         if(assignment || whil || printSt || ifSt){
