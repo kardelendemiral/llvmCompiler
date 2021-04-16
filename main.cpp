@@ -159,9 +159,20 @@ stack<string> infixToPostfix(string str){
     return output;
 }
 
-void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofstream& outfile){
+void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofstream& outfile){ //bu function gereksiz uzun oldu kısaltabiliriz
+
     bool xb=false;  //{x2 vectordeyse true oluyo ki tekrar yazmasın
     bool xi=false;  //x1    "          "       "    "       "
+    if(isInt(x1)==false && find(var.begin(),var.end(),x1)==var.end()){ // declare edilmemiş bir variable ise 0 yapıyoruz
+        outfile << "%" << x1 <<" = alloca i32" << endl;
+        outfile << "store i32 0, i32* %" << x1 << endl;
+        var.push_back(x1);
+    }
+    if(isInt(x2)==false && find(var.begin(),var.end(),x1)==var.end()){ // declare edilmemiş bir variable ise 0 yapıyoruz
+        outfile << "%" << x2 <<" = alloca i32" << endl;
+        outfile << "store i32 0, i32* %" << x2 << endl;
+        var.push_back(x2);
+    }
 
     int ini=tempno;
     if(op=="+"){
@@ -191,6 +202,7 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
         outfile<<"%t"<<tempno<<", ";  //çok uzun saçma bi kod oldu ben mal mıyım :(
         tempno++;
     }else{
+
         outfile<<x2<<", ";
     }
     if(xb==true){
@@ -206,6 +218,11 @@ string muko(string expr,ofstream& outfile,int& tempno,vector<string> vars){
 
     if(expr.find("+")==-1 &&expr.find("-")==-1&&expr.find("*")==-1&&expr.find("/")==-1){ //toplama vs yoksa
         if(!isInt(expr)){ //  t=f0 falan burda
+            if(find(vars.begin(),vars.end(),expr)==vars.end()){ // declare edilmemiş bir variable ise 0 yapıyoruz
+                outfile << "%" << expr <<" = alloca i32" << endl;
+                outfile << "store i32 0, i32* %" << expr << endl;
+                vars.push_back(expr);
+            }
             outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl;
             tempno++;
             return "%t"+to_string(tempno-1);
@@ -353,7 +370,7 @@ int main(int argc, char* argv[]) {
             inIf=true;
         }
 
-        while(line.find("choose")!=-1){ //choose varsa içindekileri alcaz choose(  3,n+1 ,2,f0 )
+      /*  while(line.find("choose")!=-1){ //choose varsa içindekileri alcaz choose(  3,n+1 ,2,f0 )
             int acpar=line.find("(");
             int kappar=line.find_last_of(")");
             string incho=line.substr(acpar+1,kappar-acpar-1);
@@ -371,7 +388,7 @@ int main(int argc, char* argv[]) {
             exp4=whitespace(exp4);
             string res1=muko(exp1,outfile,tempno,vars);
         }
-
+*/
         if(assignment || whil || printSt || ifSt){
             string s;
             string expr;
