@@ -87,20 +87,41 @@ stack<string> infixToPostfix(string str){
 
     for(int i=0;i<s.length();i++){
         //cout << s[i] << endl;
-        bool integer=false;
+        bool notOperation=false;
         int length=0;
         int j=i;
         while(s[j]!='('&& s[j]!=')'&& s[j]!='*'&&s[j]!='+'&&s[j]!='/'&&s[j]!='-'&&j<s.length()){
-            integer=true;
+            notOperation=true;
             length++;
             j++;
         }
-        if(integer){
+        if(notOperation){
             string operand;
             operand=s.substr(i,length);
+            if(operand=="choose"){
+                string a=s.substr(i);
+                int ilk=a.find("(");
+                int chooselength=length;
+                int count=1;
+                int k=ilk+1;
+                //cout <<"ilk "<< ilk <<endl;
+                while(k<a.length()&&count!=0){
+                    if(a[k]=='('){
+                        count++;
+                    } else if(a[k]==')'){
+                        count--;
+                    }
+                    chooselength++;
+                    k++;
+                }
+                operand=s.substr(i,chooselength+1);
+                //cout << chooselength<< " " << length << " "<<operand <<endl;
+                i=i+chooselength;
+            } else {
+                i=j-1;
+            }
             output.push(operand);
             //cout << operand<< " "<< i<< " " <<j << endl;
-            i=j-1;
         } else if(s[i]=='('){
             tmp.push('(');
         } else if(s[i]==')'){
@@ -150,7 +171,7 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
     }if(op=="*"){
         op="mul";
     }if(op=="/"){
-        op="div";
+        op="udiv";
     }
     //cout<<"x1: "<<x1<<"x2: "<<x2<<endl;
     if(find(var.begin(),var.end(),x2)!=var.end()){ //eğer vectorde varsa int değil
