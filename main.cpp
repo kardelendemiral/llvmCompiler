@@ -10,6 +10,9 @@
 #include <queue>
 
 using namespace std;
+
+string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,int &tempno);
+
 stack<string> tepetaklak(stack<string> s){
     stack<string> t;
     while(!s.empty()){
@@ -159,20 +162,9 @@ stack<string> infixToPostfix(string str){
     return output;
 }
 
-void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofstream& outfile){ //bu function gereksiz uzun oldu kısaltabiliriz
-
+void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofstream& outfile){
     bool xb=false;  //{x2 vectordeyse true oluyo ki tekrar yazmasın
     bool xi=false;  //x1    "          "       "    "       "
-    if(isInt(x1)==false && find(var.begin(),var.end(),x1)==var.end()){ // declare edilmemiş bir variable ise 0 yapıyoruz
-        outfile << "%" << x1 <<" = alloca i32" << endl;
-        outfile << "store i32 0, i32* %" << x1 << endl;
-        var.push_back(x1);
-    }
-    if(isInt(x2)==false && find(var.begin(),var.end(),x2)==var.end()){ // declare edilmemiş bir variable ise 0 yapıyoruz
-        outfile << "%" << x2 <<" = alloca i32" << endl;
-        outfile << "store i32 0, i32* %" << x2 << endl;
-        var.push_back(x2);
-    }
 
     int ini=tempno;
     if(op=="+"){
@@ -202,7 +194,6 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
         outfile<<"%t"<<tempno<<", ";  //çok uzun saçma bi kod oldu ben mal mıyım :(
         tempno++;
     }else{
-
         outfile<<x2<<", ";
     }
     if(xb==true){
@@ -214,15 +205,14 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
 }
 
 
-string muko(string expr,ofstream& outfile,int& tempno,vector<string> vars){
+string muko(string expr,ofstream& outfile,int& tempno,vector<string> vars,int chooseno){
 
     if(expr.find("+")==-1 &&expr.find("-")==-1&&expr.find("*")==-1&&expr.find("/")==-1){ //toplama vs yoksa
+        if(expr.substr(0,6)=="choose"){
+            chooseno++;
+            expr=choose(chooseno,expr,outfile,vars,tempno);
+        }
         if(!isInt(expr)){ //  t=f0 falan burda
-            if(find(vars.begin(),vars.end(),expr)==vars.end()){ // declare edilmemiş bir variable ise 0 yapıyoruz
-                outfile << "%" << expr <<" = alloca i32" << endl;
-                outfile << "store i32 0, i32* %" << expr << endl;
-                vars.push_back(expr);
-            }
             outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl;
             tempno++;
             return "%t"+to_string(tempno-1);
@@ -245,6 +235,16 @@ string muko(string expr,ofstream& outfile,int& tempno,vector<string> vars){
                 x1=whitespace(x1); //bunlarsız boku yiyoruz
                 x2=whitespace(x2); //    "      "      "
 
+                if(x1.substr(0,6)=="choose"){
+                    chooseno++;
+                    x1=choose(chooseno,x1,outfile,vars,tempno);
+                }
+
+                if(x2.substr(0,6)=="choose"){
+                    chooseno++;
+                    x2=choose(chooseno,x2,outfile,vars,tempno);
+                }
+
                 operation(x1,x2,op,tempno,vars,outfile);//bunu yukarda açıklıyom add falan yazdırılan kısım bu
 
                 if(!s.empty()){
@@ -261,6 +261,66 @@ string muko(string expr,ofstream& outfile,int& tempno,vector<string> vars){
         tempno++;
         return "%t"+to_string(tempno-1);
     }
+
+}
+
+string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,int &tempno){ //her türlü choose1 temporary döndercek
+    int acpar=line.find("(");
+    int kappar=line.find_last_of(")");
+    string incho=line.substr(acpar+1,kappar-acpar-1);
+    char v=',';
+    vector<int> virguller(3);
+    bool parantez=false;
+    int count=0;
+    for(int i=0;i<incho.length();i++){
+        if(incho[i]==','&&!parantez){
+            virguller[count]=i;
+            count++;
+        } else if(incho[i]=='('){
+            parantez=true;
+        } else if(incho[i]==')'){
+            parantez=false;
+        }
+    }
+
+    string exp1=incho.substr(0,virguller[0]);  //expressionları tek tek aldım
+    string exp2=incho.substr(virguller[0]+1,virguller[1]-virguller[0]-1);
+    string exp3=incho.substr(virguller[1]+1,virguller[2]-virguller[1]-1);
+    string exp4=incho.substr(virguller[2]+1,kappar-virguller[2]-1);
+    exp1=whitespace(exp1);   //buna gerek yok heralde ama yine de yapim dedim
+    exp2=whitespace(exp2);   //0
+    exp3=whitespace(exp3);   //+
+    exp4=whitespace(exp4);   //-
+    cout <<exp1 <<" "<<exp2 <<" "<<exp3 <<" "<<exp4 <<endl;
+    string res1=muko(exp1,outfile,tempno,vars,chooseno);
+
+    outfile << "%t" << tempno <<" = icmp eq i32 "<< res1 <<", 0" <<endl;
+    outfile << "br i1 %t" <<tempno<<", label %exp2"<<chooseno<<", label %exp2"<<chooseno<<"end" << endl;
+    tempno++;
+    outfile << "exp2"<<chooseno <<":"<<endl;
+    string res2=muko(exp2,outfile,tempno,vars,chooseno);
+    outfile<<"%choose"<<chooseno<<" = load i32* "<<res2<<endl;
+    outfile << "exp2"<<chooseno<<"end:"<<endl;
+
+    outfile << "%t" <<tempno << " = icmp ugt i32 " << res1 << ", 0" <<endl; //pozitifse doğru
+    outfile << "br i1 %t" <<tempno<<", label %exp3"<<chooseno<<", label %exp3"<<chooseno<<"end"<< endl;
+    tempno++;
+    outfile << "exp3"<<chooseno<<":" <<endl;
+    string res3=muko(exp3,outfile,tempno,vars,chooseno);
+    outfile<<"%choose"<<chooseno<<" = load i32* "<<res3<<endl;
+    outfile << "exp3"<<chooseno<<"end:"<<endl;
+
+    outfile << "%t" <<tempno << " = icmp ult i32 " << res1 << ", 0" <<endl; //pozitifse doğru
+    outfile << "br i1 %t" <<tempno<<", label %exp4"<<chooseno<<", label %exp4"<<chooseno<<"end"<< endl;
+    tempno++;
+    outfile << "exp4"<<chooseno <<":"<<endl;
+    string res4=muko(exp4,outfile,tempno,vars,chooseno);
+    outfile<<"%choose"<<chooseno<<" = load i32* "<<res4<<endl;
+    outfile << "exp4"<<chooseno<<"end:"<< endl;
+
+    //chooseno++;
+
+    return "choose"+to_string(chooseno);
 
 }
 bool errorCatchForExpressions(string line){
@@ -287,9 +347,11 @@ int main(int argc, char* argv[]) {
     infile.open(infileName);
     outfile.open(outfileName);
 
+
     vector<string> vars; //variable'lar bu vectorde hep
     bool syntaxError=false;
     int tempno=1;
+    int chooseno=1;
 
     outfile << "; ModuleID = 'mylang2ir'\n"
                "declare i32 @printf(i8*, ...)\n"
@@ -323,6 +385,10 @@ int main(int argc, char* argv[]) {
 
     infile.clear(); //burda file'ı okuduk bitti tekrar başlamak istiyoz o yüzden bu satırları yazmam gerekti
     infile.seekg(0, infile.beg);
+
+   /* int a=1;
+
+    choose(a,"choose( n+1 ,  9,   8, choose(o*h ,1,2,3) )",outfile,vars,tempno);*/
 
     bool inWhile=false;
     bool inIf=false;
@@ -370,25 +436,6 @@ int main(int argc, char* argv[]) {
             inIf=true;
         }
 
-      /*  while(line.find("choose")!=-1){ //choose varsa içindekileri alcaz choose(  3,n+1 ,2,f0 )
-            int acpar=line.find("(");
-            int kappar=line.find_last_of(")");
-            string incho=line.substr(acpar+1,kappar-acpar-1);
-            char v=',';
-            int vi1=incho.find(v);    //virgul yerleri
-            int vi2=incho.find(v,vi1+1);
-            int vi3=incho.find(v,vi2+1);
-            string exp1=incho.substr(0,vi1);  //expressionları tek tek aldım
-            string exp2=incho.substr(vi1+1,vi2-vi1-1);
-            string exp3=incho.substr(vi2+1,vi3-vi2-1);
-            string exp4=incho.substr(vi3+1,kappar-vi3-1);
-            exp1=whitespace(exp1);   //buna gerek yok heralde ama yine de yapim dedim
-            exp2=whitespace(exp2);
-            exp3=whitespace(exp3);
-            exp4=whitespace(exp4);
-            string res1=muko(exp1,outfile,tempno,vars);
-        }
-*/
         if(assignment || whil || printSt || ifSt){
             string s;
             string expr;
@@ -406,7 +453,7 @@ int main(int argc, char* argv[]) {
                 expr=whitespace(expr);
                 sol=whitespace(sol);
             }
-            string res=muko(expr,outfile,tempno,vars);
+            string res=muko(expr,outfile,tempno,vars,chooseno);
 
             if(whil){ //while ise yazılan şeyler
                 outfile<<"%t"<<tempno<<" = icmp ne i32 "<<res<<", 0"<<endl; //buraya tam ne yazcağımızı anlamadım tekrar bakmak lazım
