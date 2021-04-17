@@ -299,7 +299,8 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
     tempno++;
     outfile << "exp2"<<chooseno <<":"<<endl;
     string res2=muko(exp2,outfile,tempno,vars,chooseno);
-    outfile<<"%choose"<<chooseno<<" = load i32* "<<res2<<endl;
+    outfile<<"%choose"<<chooseno<<" = select i1 true, i32 "<<res2<<",i32 0"<<endl;
+    outfile<<"br label %choose"<<chooseno<<"end"<<endl;
     outfile << "exp2"<<chooseno<<"end:"<<endl;
 
     outfile << "%t" <<tempno << " = icmp ugt i32 " << res1 << ", 0" <<endl; //pozitifse doğru
@@ -307,7 +308,8 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
     tempno++;
     outfile << "exp3"<<chooseno<<":" <<endl;
     string res3=muko(exp3,outfile,tempno,vars,chooseno);
-    outfile<<"%choose"<<chooseno<<" = load i32* "<<res3<<endl;
+    outfile<<"%choose"<<chooseno<<" = select i1 true, i32 "<<res3<<",i32 0"<<endl;
+    outfile<<"br label %choose"<<chooseno<<"end"<<endl;
     outfile << "exp3"<<chooseno<<"end:"<<endl;
 
     outfile << "%t" <<tempno << " = icmp ult i32 " << res1 << ", 0" <<endl; //pozitifse doğru
@@ -315,8 +317,10 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
     tempno++;
     outfile << "exp4"<<chooseno <<":"<<endl;
     string res4=muko(exp4,outfile,tempno,vars,chooseno);
-    outfile<<"%choose"<<chooseno<<" = load i32* "<<res4<<endl;
+    outfile<<"%choose"<<chooseno<<" = select i1 true, i32 "<<res4<<",i32 0"<<endl;
+    outfile<<"br label %choose"<<chooseno<<"end"<<endl;
     outfile << "exp4"<<chooseno<<"end:"<< endl;
+    outfile<<"choose"<<chooseno<<"end:"<<endl;
 
     //chooseno++;
 
@@ -386,9 +390,9 @@ int main(int argc, char* argv[]) {
     infile.clear(); //burda file'ı okuduk bitti tekrar başlamak istiyoz o yüzden bu satırları yazmam gerekti
     infile.seekg(0, infile.beg);
 
-   /* int a=1;
+    /* int a=1;
 
-    choose(a,"choose( n+1 ,  9,   8, choose(o*h ,1,2,3) )",outfile,vars,tempno);*/
+     choose(a,"choose( n+1 ,  9,   8, choose(o*h ,1,2,3) )",outfile,vars,tempno);*/
 
     bool inWhile=false;
     bool inIf=false;
@@ -414,7 +418,8 @@ int main(int argc, char* argv[]) {
         }
 
         if(whitespace(line)=="}"&&inIf){ //if'in içindeysek ve if bittiyse
-            outfile << "ifend:" << endl;
+            outfile<<"br label %ifend"<<endl;
+            outfile << "ifend:" <<endl<< endl;
             inIf=false;
         }
 
