@@ -168,7 +168,7 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
         outfile << "store i32 0, i32* %" << x1 << endl;
         var.push_back(x1);
     }
-    if(isInt(x2)==false && find(var.begin(),var.end(),x1)==var.end()){ // declare edilmemiş bir variable ise 0 yapıyoruz
+    if(isInt(x2)==false && find(var.begin(),var.end(),x2)==var.end()){ // declare edilmemiş bir variable ise 0 yapıyoruz
         outfile << "%" << x2 <<" = alloca i32" << endl;
         outfile << "store i32 0, i32* %" << x2 << endl;
         var.push_back(x2);
