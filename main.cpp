@@ -207,11 +207,13 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
 
 string muko(string expr,ofstream& outfile,int& tempno,vector<string> vars,int chooseno){
 
+    expr=whitespace(expr);
+    if(expr.substr(0,6)=="choose"&&expr[expr.length()-1]==')'){
+        chooseno++;
+        expr=choose(chooseno,expr,outfile,vars,tempno);
+    }
+
     if(expr.find("+")==-1 &&expr.find("-")==-1&&expr.find("*")==-1&&expr.find("/")==-1){ //toplama vs yoksa
-        if(expr.substr(0,6)=="choose"){
-            chooseno++;
-            expr=choose(chooseno,expr,outfile,vars,tempno);
-        }
         if(!isInt(expr)){ //  t=f0 falan burda
             outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl;
             tempno++;
@@ -291,7 +293,7 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
     exp2=whitespace(exp2);   //0
     exp3=whitespace(exp3);   //+
     exp4=whitespace(exp4);   //-
-    cout <<exp1 <<" "<<exp2 <<" "<<exp3 <<" "<<exp4 <<endl;
+    //cout <<exp1 <<" "<<exp2 <<" "<<exp3 <<" "<<exp4 <<endl;
     string res1=muko(exp1,outfile,tempno,vars,chooseno);
 
     outfile << "%t" << tempno <<" = icmp eq i32 "<< res1 <<", 0" <<endl;
@@ -391,7 +393,6 @@ int main(int argc, char* argv[]) {
     infile.seekg(0, infile.beg);
 
     /* int a=1;
-
      choose(a,"choose( n+1 ,  9,   8, choose(o*h ,1,2,3) )",outfile,vars,tempno);*/
 
     bool inWhile=false;
