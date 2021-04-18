@@ -368,13 +368,73 @@ bool errorCatchForExpressions(string line){
     //bu finksiyonu asağıdaki fonksiyonun içinde çağırcaz
     //orn print st ise icindeki expressionı buraya yollicak 5++ 3 -4//? falan diye saçmalamış mı diye bakcaz
 }
-bool errorCatch(string line){
+bool errorCatch(string line, bool inWhile ,bool inIf){
     int comment=line.find("#");
     if(comment!=-1){
         line=line.substr(0,comment); //commentli kısmı kestik attık
     }
-    //valid lines are 1- asignment 2- empty line 3- printSt 4- if st 5- while st 6- }
-    //BUNLARDAN BIRININ SYNTAXINA UYUYO MU DIYE BAKCAZ AKSI HALDE FALSE DONCEK
+    line=whitespace(line);
+    if(line==""){ //bos line sa true
+        return true;
+    }
+    if(line=="}" ){
+        if(!inIf && !inWhile){
+            return false;
+        } else {
+            return true;
+        }
+    }
+    if(line.substr(0,5)=="while"){
+        int firstpr=5;
+        while(line[firstpr]==' '&&firstpr<line.length()){
+            firstpr++;
+        }
+        int lastpr=line.length()-2; // } dan bi önceki
+        while(line[lastpr]==' '&&lastpr>=0){
+            lastpr--;
+        }
+        if(line[firstpr]=='(' && line[lastpr]==')' && line[line.length()-1]=='}'){
+            return errorCatchForExpressions(line.substr(firstpr+1,lastpr-firstpr-1));
+        } else {
+            return false;
+        }
+    }
+    if(line.substr(0,5)=="print"){
+        if(line[5]=='(' && line[line.length()-1]==')'){
+            return errorCatchForExpressions(line.substr(6,line.length()-7));
+        } else {
+            return false;
+        }
+
+    }
+    if(line.substr(0,2)=="if"){
+        int firstpr=2;
+        while(line[firstpr]==' '&&firstpr<line.length()){
+            firstpr++;
+        }
+        int lastpr=line.length()-2; // } dan bi önceki
+        while(line[lastpr]==' '&&lastpr>=0){
+            lastpr--;
+        }
+        if(line[firstpr]=='(' && line[lastpr]==')' && line[line.length()-1]=='}'){
+            return errorCatchForExpressions(line.substr(firstpr+1,lastpr-firstpr-1));
+        } else {
+            return false;
+        }
+    }
+    int eq=line.find("=");
+    if(eq!=-1){
+        string left=line.substr(0,eq);
+        string right=line.substr(eq+1);
+        bool leftBool=errorCatchForExpressions(left);
+        bool rightBool=errorCatchForExpressions(right);
+        if(leftBool&&rightBool){
+            return true;
+        } else {
+            return false;
+        }
+    }
+    return false;
 }
 
 int main(int argc, char* argv[]) {
