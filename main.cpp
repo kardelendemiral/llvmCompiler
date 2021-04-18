@@ -217,20 +217,18 @@ string muko(string expr,ofstream& outfile,int& tempno,vector<string> &vars,int c
     stack<string> t; //temporary bir stack bu operator gelene kadar popladıklarımızı burda tutuyoz operator bulunca geri 2 tane popluyoz
     //printStack(s);
 
-    if(s.size()==1){
+    if(s.size()==1){ //stackte sadece 1 şey varsa expression sadece 1 elemanlıdır
         string str=s.top();
-        if(isInt(str)){
-            return expr;
-        }
-        if(str[0]=='%'){
+        if(isInt(str)||str[0]=='%'){ //sayı ya da tempse kendini dönüyoz
             return str;
         }
+
         if(find(vars.begin(),vars.end(),str)==vars.end()){  //variablelarda yok allocate etcez
             outfile << "%" << str <<" = alloca i32" << endl;
             outfile << "store i32 0, i32* %" << str << endl;
             vars.push_back(str);
         }
-        outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl;
+        outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl; //variable olduğu için load ediyoz
         tempno++;
         return "%t"+to_string(tempno-1);
 
