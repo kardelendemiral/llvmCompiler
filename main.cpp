@@ -174,7 +174,7 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
     }if(op=="*"){
         op="mul";
     }if(op=="/"){
-        op="udiv";
+        op="sdiv";
     }
     //cout<<"x1: "<<x1<<"x2: "<<x2<<endl;
     if(find(var.begin(),var.end(),x2)!=var.end()){ //eğer vectorde varsa int değil
@@ -205,64 +205,81 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
 }
 
 
-string muko(string expr,ofstream& outfile,int& tempno,vector<string> vars,int chooseno){
+string muko(string expr,ofstream& outfile,int& tempno,vector<string> &vars,int chooseno){
 
     expr=whitespace(expr);
-    if(expr.substr(0,6)=="choose"&&expr[expr.length()-1]==')'){
+    if(expr.substr(0,6)=="choose"&&expr[expr.length()-1]==')'){ //sagda sadece choose var
         chooseno++;
-        expr=choose(chooseno,expr,outfile,vars,tempno);
+        return choose(chooseno,expr,outfile,vars,tempno);
     }
 
-    if(expr.find("+")==-1 &&expr.find("-")==-1&&expr.find("*")==-1&&expr.find("/")==-1){ //toplama vs yoksa
-        if(!isInt(expr)){ //  t=f0 falan burda
-            outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl;
-            tempno++;
-            return "%t"+to_string(tempno-1);
-        } else { //t=5 falan
+    stack<string> s=tepetaklak(infixToPostfix(expr)); //stack i ters çevirmem gerekti doğru sırayla poplamak için
+    stack<string> t; //temporary bir stack bu operator gelene kadar popladıklarımızı burda tutuyoz operator bulunca geri 2 tane popluyoz
+    //printStack(s);
+
+    if(s.size()==1){
+        string str=s.top();
+        if(isInt(str)){
             return expr;
         }
-    } else {// t=t-1 vs
-        stack<string> s=tepetaklak(infixToPostfix(expr)); //stack i ters çevirmem gerekti doğru sırayla poplamak için
-        stack<string> t; //temporary bir stack bu operator gelene kadar popladıklarımızı burda tutuyoz operator bulunca geri 2 tane popluyoz
-        //printStack(s);
-
-        while(!s.empty()){
-            if(s.top()=="+" || s.top()=="*" || s.top()=="/" || s.top()=="-"){ //eğer operator bulursa tempteki 2 taneyi poplayacak
-                string op=s.top();
-                s.pop();
-                string x1=t.top();
-                t.pop();
-                string x2=t.top();
-                t.pop();
-                x1=whitespace(x1); //bunlarsız boku yiyoruz
-                x2=whitespace(x2); //    "      "      "
-
-                if(x1.substr(0,6)=="choose"){
-                    chooseno++;
-                    x1=choose(chooseno,x1,outfile,vars,tempno);
-                }
-
-                if(x2.substr(0,6)=="choose"){
-                    chooseno++;
-                    x2=choose(chooseno,x2,outfile,vars,tempno);
-                }
-
-                operation(x1,x2,op,tempno,vars,outfile);//bunu yukarda açıklıyom add falan yazdırılan kısım bu
-
-                if(!s.empty()){
-                    string n="%t"+to_string(tempno); //buralar hep yazdırma kısmı
-                    s.push(n); //vectore yeni variable ımızı pushladık
-                    tempno++;
-                }
-            }else{ // operator değilse temp e pushluyoruz
-                t.push(s.top());
-                s.pop();
-
-            }
+        if(str[0]=='%'){
+            return str;
         }
+        if(find(vars.begin(),vars.end(),str)==vars.end()){  //variablelarda yok allocate etcez
+            outfile << "%" << str <<" = alloca i32" << endl;
+            outfile << "store i32 0, i32* %" << str << endl;
+            vars.push_back(str);
+        }
+        outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl;
         tempno++;
         return "%t"+to_string(tempno-1);
+
     }
+
+    while(!s.empty()){
+        if(s.top()=="+" || s.top()=="*" || s.top()=="/" || s.top()=="-"){ //eğer operator bulursa tempteki 2 taneyi poplayacak
+            string op=s.top();
+            s.pop();
+            string x1=t.top();
+            t.pop();
+            string x2=t.top();
+            t.pop();
+            x1=whitespace(x1); //bunlarsız boku yiyoruz
+            x2=whitespace(x2); //    "      "      "
+
+            if(x1.substr(0,6)=="choose"){
+                chooseno++;
+                x1=choose(chooseno,x1,outfile,vars,tempno);
+            } else if(find(vars.begin(),vars.end(),x1)==vars.end()&&!isInt(x1)&&x1[0]!='%'){ //variablelarda yok allocate etcez
+                outfile << "%" << x1 <<" = alloca i32" << endl;
+                outfile << "store i32 0, i32* %" << x1 << endl;
+                vars.push_back(x1);
+            }
+
+            if(x2.substr(0,6)=="choose"){
+                chooseno++;
+                x2=choose(chooseno,x2,outfile,vars,tempno);
+            } else if(find(vars.begin(),vars.end(),x2)==vars.end()&&!isInt(x2)&&x2[0]!='%'){ //variablelarda yok allocate etcez
+                outfile << "%" << x2 <<" = alloca i32" << endl;
+                outfile << "store i32 0, i32* %" << x2 << endl;
+                vars.push_back(x2);
+            }
+
+            operation(x1,x2,op,tempno,vars,outfile);//bunu yukarda açıklıyom add falan yazdırılan kısım bu
+
+            if(!s.empty()){
+                string n="%t"+to_string(tempno); //buralar hep yazdırma kısmı
+                s.push(n); //vectore yeni variable ımızı pushladık
+                tempno++;
+            }
+        }else{ // operator değilse temp e pushluyoruz
+            t.push(s.top());
+            s.pop();
+
+        }
+    }
+    tempno++;
+    return "%t"+to_string(tempno-1);
 
 }
 
@@ -296,7 +313,27 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
     //cout <<exp1 <<" "<<exp2 <<" "<<exp3 <<" "<<exp4 <<endl;
     string res1=muko(exp1,outfile,tempno,vars,chooseno);
 
-    outfile << "%t" << tempno <<" = icmp eq i32 "<< res1 <<", 0" <<endl;
+    string res2=muko(exp2,outfile,tempno,vars,chooseno);
+    string res3=muko(exp3,outfile,tempno,vars,chooseno);
+
+    outfile << "%t" << tempno <<" = icmp eq i32 "<< res1 <<", 0" <<endl; //0 mı?
+    tempno++;
+
+    outfile << "%t" << tempno << " = select i1 "<< "%t" <<tempno-1<< ", i32 " << res2 <<" i32 "<<res3 <<endl; //0'sa res2 değilse res3
+    string a="%t"+to_string(tempno);
+    tempno++;
+
+    string res4=muko(exp4,outfile,tempno,vars,chooseno);
+
+    outfile << "%t" << tempno <<" = icmp slt i32 "<< res1 <<", 0" <<endl; //negatif mi?
+    tempno++;
+
+    outfile << "%t" << tempno << " = select i1 "<< "%t" <<tempno-1<< ", i32 " << res4 <<" i32 "<<a <<endl; //negatifse res4 değilse önceki
+    tempno++;
+
+    return "%t"+to_string(tempno-1);
+
+    /*
     outfile << "br i1 %t" <<tempno<<", label %exp2"<<chooseno<<", label %exp2"<<chooseno<<"end" << endl;
     tempno++;
     outfile << "exp2"<<chooseno <<":"<<endl;
@@ -326,7 +363,7 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
 
     //chooseno++;
 
-    return "choose"+to_string(chooseno);
+    return "choose"+to_string(chooseno);*/
 
 }
 bool errorCatchForExpressions(string line){
