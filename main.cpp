@@ -208,10 +208,7 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
 string muko(string expr,ofstream& outfile,int& tempno,vector<string> &vars,int chooseno){
 
     expr=whitespace(expr);
-    if(expr.substr(0,6)=="choose"&&expr[expr.length()-1]==')'){ //sagda sadece choose var
-        chooseno++;
-        return choose(chooseno,expr,outfile,vars,tempno);
-    }
+
 
     stack<string> s=tepetaklak(infixToPostfix(expr)); //stack i ters çevirmem gerekti doğru sırayla poplamak için
     stack<string> t; //temporary bir stack bu operator gelene kadar popladıklarımızı burda tutuyoz operator bulunca geri 2 tane popluyoz
@@ -219,7 +216,11 @@ string muko(string expr,ofstream& outfile,int& tempno,vector<string> &vars,int c
 
     if(s.size()==1){ //stackte sadece 1 şey varsa expression sadece 1 elemanlıdır
         string str=s.top();
-        if(isInt(str)||str[0]=='%'){ //sayı ya da tempse kendini dönüyoz
+        if(expr.substr(0,6)=="choose"&&expr[expr.length()-1]==')'){ //sagda sadece choose var
+            chooseno++;
+            return choose(chooseno,expr,outfile,vars,tempno);
+        }
+        if(isInt(str)){ //sayı ya da tempse kendini dönüyoz
             return str;
         }
 
@@ -317,7 +318,7 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
     outfile << "%t" << tempno <<" = icmp eq i32 "<< res1 <<", 0" <<endl; //0 mı?
     tempno++;
 
-    outfile << "%t" << tempno << " = select i1 "<< "%t" <<tempno-1<< ", i32 " << res2 <<" i32 "<<res3 <<endl; //0'sa res2 değilse res3
+    outfile << "%t" << tempno << " = select i1 "<< "%t" <<tempno-1<< ", i32 " << res2 <<", i32 "<<res3 <<endl; //0'sa res2 değilse res3
     string a="%t"+to_string(tempno);
     tempno++;
 
@@ -326,7 +327,7 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
     outfile << "%t" << tempno <<" = icmp slt i32 "<< res1 <<", 0" <<endl; //negatif mi?
     tempno++;
 
-    outfile << "%t" << tempno << " = select i1 "<< "%t" <<tempno-1<< ", i32 " << res4 <<" i32 "<<a <<endl; //negatifse res4 değilse önceki
+    outfile << "%t" << tempno << " = select i1 "<< "%t" <<tempno-1<< ", i32 " << res4 <<", i32 "<<a <<endl; //negatifse res4 değilse önceki
     tempno++;
 
     return "%t"+to_string(tempno-1);
@@ -364,7 +365,113 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
     return "choose"+to_string(chooseno);*/
 
 }
-bool errorCatchForExpressions(string line){
+
+
+bool errorCatchForExpressions(string s){
+    if(s.find("=")!=-1 || s.find("print")!=-1 || s.find("while")!=-1 || s.find("if")!=-1){ //bunlar varsa error
+        cout<<"false";
+        return false;
+    }
+    s=whitespace(s);
+    if((s[0]<48||s[0]>57)&&(s[0]<65||s[0]>90)&&(s[0]<97||s[0]>122) && s[0]!='('){ //bunlardan biriyle başlamıyosa error
+        cout<<"false";
+        return false;
+    }
+    if(s.find("(")!=-1 || s.find(")")!=-1){ //parantez checki
+        stack<char> st;
+        for(int i=0;i<s.length();i++){
+            if(s[i]=='('){
+                st.push('(');
+            }else if(s[i]==')'){
+                if(st.empty() || st.top()!='('){
+                    cout<<"false";
+                    return false;
+                }
+                st.pop();
+            }
+        }
+        if(st.size()!=0){
+            cout<< "false";
+            return false;
+        }
+    }
+
+
+    for(int i=0;i<s.length();i++){
+        //cout << s[i] << endl;
+        if(s[i]==' '){
+            continue;
+        }
+        bool notOperation=false;
+        int length=0;
+        int j=i;
+        while(s[j]!='('&& s[j]!=')'&& s[j]!='*'&&s[j]!='+'&&s[j]!='/'&&s[j]!='-'&&s[j]!=' ' &&j<s.length()){ //variableları alıyo
+            notOperation=true;
+            length++;
+            j++;
+        }
+        if(notOperation){
+            string operand;
+            operand=s.substr(i,length);
+            if(operand=="choose"){
+                string a=s.substr(i);
+                int ilk=a.find("(");
+                int chooselength=length;
+                int count=1;
+                int k=ilk+1;
+                //cout <<"ilk "<< ilk <<endl;
+                while(k<a.length()&&count!=0){
+                    if(a[k]=='('){
+                        count++;
+                    } else if(a[k]==')'){
+                        count--;
+                    }
+                    chooselength++;
+                    k++;
+                }
+                operand=s.substr(i,chooselength+1);
+                //cout << chooselength<< " " << length << " "<<operand <<endl;
+                i=i+chooselength;
+            } else {
+                i=j-1;
+            }
+            bool f=false;
+            for(int k=i+1;k<s.length();k++){ //burda i+1 mi j+1 mi olacak emin değilim
+                if(s[k]!=' '){//
+                    f=true;
+                }
+                if(s[k]!='+' && s[k]!='-' &&s[k]!='*' && s[k]!='/'&& s[k]!=')' &&s[k]!=' ' ){ //variabledan sonra bunlardan biri yoksa error
+                    cout<<"false";
+                    return false;
+                }
+                if(f){
+                    break;
+                }
+            }
+
+        } else{ //operatorlerden sonra bunlar yoksa error
+            bool m=false;
+            for(int q=j+1;q<s.length();q++){ //burda i+1 mi j+1 mi olacak emin değilim
+                if(s[q]!=' '){
+                    m=true;
+                }
+                if( (s[q]<48||s[q]>57)&&(s[q]<65||s[q]>90)&&(s[q]<97||s[q]>122) && s[q]!='(' && s[q]!=' '){
+                    cout<<"false";
+                    return false;
+                }
+                if(m){
+                    break;
+                }
+            }
+
+
+        }
+
+    }
+
+
+
+
     //bu finksiyonu asağıdaki fonksiyonun içinde çağırcaz
     //orn print st ise icindeki expressionı buraya yollicak 5++ 3 -4//? falan diye saçmalamış mı diye bakcaz
 }
@@ -461,6 +568,8 @@ int main(int argc, char* argv[]) {
     outfile<< endl;
 
     string line;
+    errorCatchForExpressions("  345  + ab -c + choose(1+choose(2+n,15,6,9),2,3+choose(1,2,3,4),4) -12 ");
+
 
     while(getline(infile,line)){
 
@@ -530,7 +639,7 @@ int main(int argc, char* argv[]) {
             printSt=true;
         }
 
-        if(line.find("if")!=-1){ //print ise
+        if(line.find("if")!=-1){ //if ise
             outfile << "br label %ifcond" << endl;
             outfile << "ifcond:" << endl;
             ifSt=true;
