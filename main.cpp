@@ -364,11 +364,16 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
 
 
 bool errorCatchForExpressions(string s){
-    if(s.find("=")!=-1 || s.find("print")!=-1 || s.find("while")!=-1 || s.find("if")!=-1){ //bunlar varsa error
+
+    s=whitespace(s);
+    if(s.find("=")!=-1 ){ //bunlar varsa error
         cout<<"false";
         return false;
     }
-    s=whitespace(s);
+    if(s.length()==0){
+        cout<<"false";
+        return false;
+    }
     if((s[0]<48||s[0]>57)&&(s[0]<65||s[0]>90)&&(s[0]<97||s[0]>122) && s[0]!='('){ //bunlardan biriyle başlamıyosa error
         cout<<"false";
         return false;
@@ -409,6 +414,11 @@ bool errorCatchForExpressions(string s){
         if(notOperation){
             string operand;
             operand=s.substr(i,length);
+
+            if(operand=="if"|| operand=="while"|| operand=="print"){
+                cout<<"false";
+                return false;
+            }
             if(operand=="choose"){
                 string a=s.substr(i);
                 int ilk=a.find("(");
@@ -426,8 +436,44 @@ bool errorCatchForExpressions(string s){
                     k++;
                 }
                 operand=s.substr(i,chooselength+1);
-                //cout << chooselength<< " " << length << " "<<operand <<endl;
+              //  cout<<operand<<endl;
                 i=i+chooselength;
+                int acpar=operand.find("(");
+                int kappar=operand.find_last_of(")");
+                string incho=operand.substr(acpar+1,kappar-acpar-1);
+                char v=',';
+                vector<int> virguller(3);
+                bool parantez=false;
+                int countt=0;
+                int vco=0;
+                for(int i=0; i<incho.length();i++){
+                    if(incho[i]==','){
+                        vco++;
+                    }
+                }
+                if(vco!=3){
+                    cout<<"false";
+                    return false;
+                }
+                for(int i=0;i<incho.length();i++){
+                    if(incho[i]==','&&!parantez){
+                        virguller[countt]=i;
+                        countt++;
+                    } else if(incho[i]=='('){
+                        parantez=true;
+                    } else if(incho[i]==')'){
+                        parantez=false;
+                    }
+                }
+                string exp1=incho.substr(0,virguller[0]);  //expressionları tek tek aldım
+                string exp2=incho.substr(virguller[0]+1,virguller[1]-virguller[0]-1);
+                string exp3=incho.substr(virguller[1]+1,virguller[2]-virguller[1]-1);
+                string exp4=incho.substr(virguller[2]+1,kappar-virguller[2]-1);
+               // cout<<exp1<<" "<<exp2<<" "<<exp3<<" "<<exp4;
+                if(!errorCatchForExpressions(exp1) || !errorCatchForExpressions(exp2)||!errorCatchForExpressions(exp3)||!errorCatchForExpressions(exp4) ){
+                    cout<<"false";
+                    return false;
+                }
             } else {
                 i=j-1;
             }
@@ -464,6 +510,7 @@ bool errorCatchForExpressions(string s){
         }
 
     }
+    return true;
     //bu finksiyonu asağıdaki fonksiyonun içinde çağırcaz
     //orn print st ise icindeki expressionı buraya yollicak 5++ 3 -4//? falan diye saçmalamış mı diye bakcaz
 }
@@ -566,7 +613,7 @@ int main(int argc, char* argv[]) {
     outfile<< endl;
 
     string line;
-    errorCatchForExpressions("  345  + ab -c + choose(1+choose(2+n,15,6,9),2,3+choose(1,2,3,4),4) -12 ");
+    errorCatchForExpressions("choose(2 +)1");
 
 
     while(getline(infile,line)){
