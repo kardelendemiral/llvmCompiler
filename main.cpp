@@ -340,7 +340,6 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
     outfile<<"%choose"<<chooseno<<" = select i1 true, i32 "<<res2<<",i32 0"<<endl;
     outfile<<"br label %choose"<<chooseno<<"end"<<endl;
     outfile << "exp2"<<chooseno<<"end:"<<endl;
-
     outfile << "%t" <<tempno << " = icmp ugt i32 " << res1 << ", 0" <<endl; //pozitifse doğru
     outfile << "br i1 %t" <<tempno<<", label %exp3"<<chooseno<<", label %exp3"<<chooseno<<"end"<< endl;
     tempno++;
@@ -349,7 +348,6 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
     outfile<<"%choose"<<chooseno<<" = select i1 true, i32 "<<res3<<",i32 0"<<endl;
     outfile<<"br label %choose"<<chooseno<<"end"<<endl;
     outfile << "exp3"<<chooseno<<"end:"<<endl;
-
     outfile << "%t" <<tempno << " = icmp ult i32 " << res1 << ", 0" <<endl; //pozitifse doğru
     outfile << "br i1 %t" <<tempno<<", label %exp4"<<chooseno<<", label %exp4"<<chooseno<<"end"<< endl;
     tempno++;
@@ -359,9 +357,7 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
     outfile<<"br label %choose"<<chooseno<<"end"<<endl;
     outfile << "exp4"<<chooseno<<"end:"<< endl;
     outfile<<"choose"<<chooseno<<"end:"<<endl;
-
     //chooseno++;
-
     return "choose"+to_string(chooseno);*/
 
 }
@@ -468,10 +464,6 @@ bool errorCatchForExpressions(string s){
         }
 
     }
-
-
-
-
     //bu finksiyonu asağıdaki fonksiyonun içinde çağırcaz
     //orn print st ise icindeki expressionı buraya yollicak 5++ 3 -4//? falan diye saçmalamış mı diye bakcaz
 }
@@ -492,6 +484,9 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
         }
     }
     if(line.substr(0,5)=="while"){
+        if(inWhile || inIf){
+            return false;
+        }
         int firstpr=5;
         while(line[firstpr]==' '&&firstpr<line.length()){
             firstpr++;
@@ -515,6 +510,9 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
 
     }
     if(line.substr(0,2)=="if"){
+        if(inWhile || inIf){
+            return false;
+        }
         int firstpr=2;
         while(line[firstpr]==' '&&firstpr<line.length()){
             firstpr++;
