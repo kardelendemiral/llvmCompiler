@@ -367,15 +367,13 @@ bool errorCatchForExpressions(string s){
 
     s=whitespace(s);
     if(s.find("=")!=-1 ){ //bunlar varsa error
-        cout<<"false";
         return false;
     }
     if(s.length()==0){
-        cout<<"false";
         return false;
     }
     if((s[0]<48||s[0]>57)&&(s[0]<65||s[0]>90)&&(s[0]<97||s[0]>122) && s[0]!='('){ //bunlardan biriyle başlamıyosa error
-        cout<<"false";
+
         return false;
     }
     if(s.find("(")!=-1 || s.find(")")!=-1){ //parantez checki
@@ -392,7 +390,7 @@ bool errorCatchForExpressions(string s){
             }
         }
         if(st.size()!=0){
-            cout<< "false";
+
             return false;
         }
     }
@@ -416,7 +414,7 @@ bool errorCatchForExpressions(string s){
             operand=s.substr(i,length);
 
             if(operand=="if"|| operand=="while"|| operand=="print"){
-                cout<<"false";
+
                 return false;
             }
             if(operand=="choose"){
@@ -436,7 +434,7 @@ bool errorCatchForExpressions(string s){
                     k++;
                 }
                 operand=s.substr(i,chooselength+1);
-              //  cout<<operand<<endl;
+                //  cout<<operand<<endl;
                 i=i+chooselength;
                 int acpar=operand.find("(");
                 int kappar=operand.find_last_of(")");
@@ -446,13 +444,22 @@ bool errorCatchForExpressions(string s){
                 bool parantez=false;
                 int countt=0;
                 int vco=0;
-                for(int i=0; i<incho.length();i++){
-                    if(incho[i]==','){
+                stack<char> vi;
+                for(int i=0; i<incho.length();i++){ //a=13*choose(2,10,4,choose(2,(14+2)/13*(9),2*100*5/10,m))
+                    if(incho[i]=='('){
+                        vi.push('(');
+                    }
+                    if(incho[i]==')'){
+                        if(!vi.empty()){
+                            vi.pop();
+                        }
+                    }
+                    if(incho[i]==',' && vi.empty()){
                         vco++;
                     }
                 }
                 if(vco!=3){
-                    cout<<"false";
+
                     return false;
                 }
                 for(int i=0;i<incho.length();i++){
@@ -469,9 +476,9 @@ bool errorCatchForExpressions(string s){
                 string exp2=incho.substr(virguller[0]+1,virguller[1]-virguller[0]-1);
                 string exp3=incho.substr(virguller[1]+1,virguller[2]-virguller[1]-1);
                 string exp4=incho.substr(virguller[2]+1,kappar-virguller[2]-1);
-               // cout<<exp1<<" "<<exp2<<" "<<exp3<<" "<<exp4;
+                // cout<<exp1<<" "<<exp2<<" "<<exp3<<" "<<exp4;
                 if(!errorCatchForExpressions(exp1) || !errorCatchForExpressions(exp2)||!errorCatchForExpressions(exp3)||!errorCatchForExpressions(exp4) ){
-                    cout<<"false";
+
                     return false;
                 }
             } else {
@@ -483,7 +490,7 @@ bool errorCatchForExpressions(string s){
                     f=true;
                 }
                 if(s[k]!='+' && s[k]!='-' &&s[k]!='*' && s[k]!='/'&& s[k]!=')' &&s[k]!=' ' ){ //variabledan sonra bunlardan biri yoksa error
-                    cout<<"false";
+
                     return false;
                 }
                 if(f){
@@ -492,13 +499,19 @@ bool errorCatchForExpressions(string s){
             }
 
         } else{ //operatorlerden sonra bunlar yoksa error
-            bool m=false;
+            bool m=false;  //(3+6) -9
             for(int q=j+1;q<s.length();q++){ //burda i+1 mi j+1 mi olacak emin değilim
-                if(s[q]!=' '){
+                if(s[q]!=' '){ //boşluk değilse buldu bir sonrakini
                     m=true;
+                } else {
+                    continue;
                 }
-                if( (s[q]<48||s[q]>57)&&(s[q]<65||s[q]>90)&&(s[q]<97||s[q]>122) && s[q]!='(' && s[q]!=' '){
-                    cout<<"false";
+                if(s[j]==')'){
+                    if(s[q]!='+' && s[q]!='-' &&s[q]!='*' && s[q]!='/'&& s[q]!=')' &&s[q]!=' '){
+                        return false;
+                    }
+
+                } else if( (s[q]<48||s[q]>57)&&(s[q]<65||s[q]>90)&&(s[q]<97||s[q]>122) && s[q]!='(' && s[q]!=' '){//+-*/(
                     return false;
                 }
                 if(m){
@@ -542,7 +555,7 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
         while(line[lastpr]==' '&&lastpr>=0){
             lastpr--;
         }
-        if(line[firstpr]=='(' && line[lastpr]==')' && line[line.length()-1]=='}'){
+        if(line[firstpr]=='(' && line[lastpr]==')' && line[line.length()-1]=='{'){
             return errorCatchForExpressions(line.substr(firstpr+1,lastpr-firstpr-1));
         } else {
             return false;
@@ -568,7 +581,7 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
         while(line[lastpr]==' '&&lastpr>=0){
             lastpr--;
         }
-        if(line[firstpr]=='(' && line[lastpr]==')' && line[line.length()-1]=='}'){
+        if(line[firstpr]=='(' && line[lastpr]==')' && line[line.length()-1]=='{'){
             return errorCatchForExpressions(line.substr(firstpr+1,lastpr-firstpr-1));
         } else {
             return false;
@@ -613,7 +626,7 @@ int main(int argc, char* argv[]) {
     outfile<< endl;
 
     string line;
-    errorCatchForExpressions("choose(2 +)1");
+
 
 
     while(getline(infile,line)){
@@ -646,6 +659,7 @@ int main(int argc, char* argv[]) {
 
     bool inWhile=false;
     bool inIf=false;
+    cout<<errorCatch("a=(14+2)+13*(9)",inWhile,inIf);
 
     //BISMILLAHIRRAHMANIRRAHIM ALLAH CC HELP US IF YOU EXIST
     //dunyanın en basıc kodunu gormeye hazır ol <3
