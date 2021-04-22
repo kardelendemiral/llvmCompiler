@@ -425,6 +425,7 @@ bool errorCatchForExpressions(string s){
         if(notOperation){
             string operand;
             operand=s.substr(i,length);
+            isValidVariableName(operand);
 
             if(operand=="if"|| operand=="while"|| operand=="print"){
 
