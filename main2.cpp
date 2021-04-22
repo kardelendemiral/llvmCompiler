@@ -361,16 +361,32 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
     return "choose"+to_string(chooseno);*/
 
 }
-
-
-bool errorCatchForExpressions(string s){
-    if(s.find("=")!=-1 || s.find("print")!=-1 || s.find("while")!=-1 || s.find("if")!=-1){ //bunlar varsa error
-        cout<<"false";
+bool isValidVariableName(string str){
+    if(str==""){
         return false;
     }
+    if(!(str[0]>='a'&&str[0]<='z')&&!(str[0]>='A'&&str[0]<='Z')){
+        return false;
+    }
+    for(int i=1;i<str.length();i++){
+        if(!(str[i]>='0'&&str[i]<='9')&&!(str[i]>='a'&&str[i]<='z')&&!(str[i]>='A'&&str[i]<='Z')){
+            return false;
+        }
+    }
+    return true;
+}
+
+bool errorCatchForExpressions(string s){
+
     s=whitespace(s);
+    if(s.find("=")!=-1 ){ //bunlar varsa error
+        return false;
+    }
+    if(s.length()==0){
+        return false;
+    }
     if((s[0]<48||s[0]>57)&&(s[0]<65||s[0]>90)&&(s[0]<97||s[0]>122) && s[0]!='('){ //bunlardan biriyle başlamıyosa error
-        cout<<"false";
+
         return false;
     }
     if(s.find("(")!=-1 || s.find(")")!=-1){ //parantez checki
@@ -387,7 +403,7 @@ bool errorCatchForExpressions(string s){
             }
         }
         if(st.size()!=0){
-            cout<< "false";
+
             return false;
         }
     }
@@ -409,6 +425,11 @@ bool errorCatchForExpressions(string s){
         if(notOperation){
             string operand;
             operand=s.substr(i,length);
+
+            if(operand=="if"|| operand=="while"|| operand=="print"){
+
+                return false;
+            }
             if(operand=="choose"){
                 string a=s.substr(i);
                 int ilk=a.find("(");
@@ -426,8 +447,53 @@ bool errorCatchForExpressions(string s){
                     k++;
                 }
                 operand=s.substr(i,chooselength+1);
-                //cout << chooselength<< " " << length << " "<<operand <<endl;
+                //  cout<<operand<<endl;
                 i=i+chooselength;
+                int acpar=operand.find("(");
+                int kappar=operand.find_last_of(")");
+                string incho=operand.substr(acpar+1,kappar-acpar-1);
+                char v=',';
+                vector<int> virguller(3);
+                bool parantez=false;
+                int countt=0;
+                int vco=0;
+                stack<char> vi;
+                for(int i=0; i<incho.length();i++){ //a=13*choose(2,10,4,choose(2,(14+2)/13*(9),2*100*5/10,m))
+                    if(incho[i]=='('){
+                        vi.push('(');
+                    }
+                    if(incho[i]==')'){
+                        if(!vi.empty()){
+                            vi.pop();
+                        }
+                    }
+                    if(incho[i]==',' && vi.empty()){
+                        vco++;
+                    }
+                }
+                if(vco!=3){
+
+                    return false;
+                }
+                for(int i=0;i<incho.length();i++){
+                    if(incho[i]==','&&!parantez){
+                        virguller[countt]=i;
+                        countt++;
+                    } else if(incho[i]=='('){
+                        parantez=true;
+                    } else if(incho[i]==')'){
+                        parantez=false;
+                    }
+                }
+                string exp1=incho.substr(0,virguller[0]);  //expressionları tek tek aldım
+                string exp2=incho.substr(virguller[0]+1,virguller[1]-virguller[0]-1);
+                string exp3=incho.substr(virguller[1]+1,virguller[2]-virguller[1]-1);
+                string exp4=incho.substr(virguller[2]+1,kappar-virguller[2]-1);
+                // cout<<exp1<<" "<<exp2<<" "<<exp3<<" "<<exp4;
+                if(!errorCatchForExpressions(exp1) || !errorCatchForExpressions(exp2)||!errorCatchForExpressions(exp3)||!errorCatchForExpressions(exp4) ){
+
+                    return false;
+                }
             } else {
                 i=j-1;
             }
@@ -437,7 +503,7 @@ bool errorCatchForExpressions(string s){
                     f=true;
                 }
                 if(s[k]!='+' && s[k]!='-' &&s[k]!='*' && s[k]!='/'&& s[k]!=')' &&s[k]!=' ' ){ //variabledan sonra bunlardan biri yoksa error
-                    cout<<"false";
+
                     return false;
                 }
                 if(f){
@@ -446,13 +512,19 @@ bool errorCatchForExpressions(string s){
             }
 
         } else{ //operatorlerden sonra bunlar yoksa error
-            bool m=false;
+            bool m=false;  //(3+6) -9
             for(int q=j+1;q<s.length();q++){ //burda i+1 mi j+1 mi olacak emin değilim
-                if(s[q]!=' '){
+                if(s[q]!=' '){ //boşluk değilse buldu bir sonrakini
                     m=true;
+                } else {
+                    continue;
                 }
-                if( (s[q]<48||s[q]>57)&&(s[q]<65||s[q]>90)&&(s[q]<97||s[q]>122) && s[q]!='(' && s[q]!=' '){
-                    cout<<"false";
+                if(s[j]==')'){
+                    if(s[q]!='+' && s[q]!='-' &&s[q]!='*' && s[q]!='/'&& s[q]!=')' &&s[q]!=' '){
+                        return false;
+                    }
+
+                } else if( (s[q]<48||s[q]>57)&&(s[q]<65||s[q]>90)&&(s[q]<97||s[q]>122) && s[q]!='(' && s[q]!=' '){//+-*/(
                     return false;
                 }
                 if(m){
@@ -464,6 +536,7 @@ bool errorCatchForExpressions(string s){
         }
 
     }
+    return true;
     //bu finksiyonu asağıdaki fonksiyonun içinde çağırcaz
     //orn print st ise icindeki expressionı buraya yollicak 5++ 3 -4//? falan diye saçmalamış mı diye bakcaz
 }
@@ -495,7 +568,7 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
         while(line[lastpr]==' '&&lastpr>=0){
             lastpr--;
         }
-        if(line[firstpr]=='(' && line[lastpr]==')' && line[line.length()-1]=='}'){
+        if(line[firstpr]=='(' && line[lastpr]==')' && line[line.length()-1]=='{'){
             return errorCatchForExpressions(line.substr(firstpr+1,lastpr-firstpr-1));
         } else {
             return false;
@@ -521,7 +594,7 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
         while(line[lastpr]==' '&&lastpr>=0){
             lastpr--;
         }
-        if(line[firstpr]=='(' && line[lastpr]==')' && line[line.length()-1]=='}'){
+        if(line[firstpr]=='(' && line[lastpr]==')' && line[line.length()-1]=='{'){
             return errorCatchForExpressions(line.substr(firstpr+1,lastpr-firstpr-1));
         } else {
             return false;
@@ -531,7 +604,7 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
     if(eq!=-1){
         string left=line.substr(0,eq);
         string right=line.substr(eq+1);
-        bool leftBool=errorCatchForExpressions(left);
+        bool leftBool=isValidVariableName(left);
         bool rightBool=errorCatchForExpressions(right);
         if(leftBool&&rightBool){
             return true;
@@ -543,8 +616,6 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
 }
 
 int main(int argc, char* argv[]) {
-
-    errorCatchForExpressions(" aman   +1");
 
     string infileName=argv[1];
     string outfileName=argv[2];
@@ -568,10 +639,10 @@ int main(int argc, char* argv[]) {
     outfile<< endl;
 
     string line;
-    errorCatchForExpressions("  345  + ab -c + choose(1+choose(2+n,15,6,9),2,3+choose(1,2,3,4),4) -12 ");
 
 
-    while(getline(infile,line)){
+
+    /*while(getline(infile,line)){
 
         int found=line.find("=");
 
@@ -594,13 +665,15 @@ int main(int argc, char* argv[]) {
     outfile << endl;
 
     infile.clear(); //burda file'ı okuduk bitti tekrar başlamak istiyoz o yüzden bu satırları yazmam gerekti
-    infile.seekg(0, infile.beg);
+    infile.seekg(0, infile.beg); */
 
     /* int a=1;
      choose(a,"choose( n+1 ,  9,   8, choose(o*h ,1,2,3) )",outfile,vars,tempno);*/
 
     bool inWhile=false;
     bool inIf=false;
+    int lineNum=1;
+    //cout<<errorCatch(" a=choose(4,3,2,1)",inWhile,inIf);
 
     //BISMILLAHIRRAHMANIRRAHIM ALLAH CC HELP US IF YOU EXIST
     //dunyanın en basıc kodunu gormeye hazır ol <3
@@ -610,6 +683,11 @@ int main(int argc, char* argv[]) {
         bool ifSt=false;
         bool printSt=false;
         bool assignment=false;
+
+        if(!errorCatch(line,inWhile,inIf)){
+            cout << "Line "<<lineNum<<": syntax error" << endl;
+            return 0;
+        }
 
         if(found!=string::npos){
             assignment=true;
@@ -662,6 +740,11 @@ int main(int argc, char* argv[]) {
                 sol=line.substr(0,found); //assignmentın sol kısmı
                 expr=whitespace(expr);
                 sol=whitespace(sol);
+                if(find(vars.begin(),vars.end(),sol)==vars.end()){
+                    outfile << "%" << sol <<" = alloca i32" << endl;
+                    outfile << "store i32 0, i32* %" << sol << endl;
+                    vars.push_back(sol);
+                }
             }
             string res=muko(expr,outfile,tempno,vars,chooseno);
 
@@ -687,6 +770,7 @@ int main(int argc, char* argv[]) {
                 outfile<<sol<<endl;
             }
         }
+        lineNum++;
     }
 
     outfile << "ret i32 0" << endl;
