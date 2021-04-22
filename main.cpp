@@ -361,7 +361,20 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
     return "choose"+to_string(chooseno);*/
 
 }
-
+bool isValidVariableName(string str){
+    if(str==""){
+        return false;
+    }
+    if(!(str[0]>='a'&&str[0]<='z')&&!(str[0]>='A'&&str[0]<='Z')){
+        return false;
+    }
+    for(int i=1;i<str.length();i++){
+        if(!(str[i]>='0'&&str[i]<='9')&&!(str[i]>='a'&&str[i]<='z')&&!(str[i]>='A'&&str[i]<='Z')){
+            return false;
+        }
+    }
+    return true;
+}
 
 bool errorCatchForExpressions(string s){
 
@@ -591,7 +604,7 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
     if(eq!=-1){
         string left=line.substr(0,eq);
         string right=line.substr(eq+1);
-        bool leftBool=errorCatchForExpressions(left);
+        bool leftBool=isValidVariableName(left);
         bool rightBool=errorCatchForExpressions(right);
         if(leftBool&&rightBool){
             return true;
@@ -659,7 +672,8 @@ int main(int argc, char* argv[]) {
 
     bool inWhile=false;
     bool inIf=false;
-    cout<<errorCatch("a=(14+2)+13*(9)",inWhile,inIf);
+    int lineNum=1;
+    //cout<<errorCatch(" a=choose(4,3,2,1)",inWhile,inIf);
 
     //BISMILLAHIRRAHMANIRRAHIM ALLAH CC HELP US IF YOU EXIST
     //dunyanın en basıc kodunu gormeye hazır ol <3
@@ -669,6 +683,11 @@ int main(int argc, char* argv[]) {
         bool ifSt=false;
         bool printSt=false;
         bool assignment=false;
+
+        if(!errorCatch(line,inWhile,inIf)){
+            cout << "Line "<<lineNum<<": syntax error" << endl;
+            return 0;
+        }
 
         if(found!=string::npos){
             assignment=true;
@@ -721,6 +740,11 @@ int main(int argc, char* argv[]) {
                 sol=line.substr(0,found); //assignmentın sol kısmı
                 expr=whitespace(expr);
                 sol=whitespace(sol);
+                if(find(vars.begin(),vars.end(),sol)==vars.end()){
+                    outfile << "%" << sol <<" = alloca i32" << endl;
+                    outfile << "store i32 0, i32* %" << sol << endl;
+                    vars.push_back(sol);
+                }
             }
             string res=muko(expr,outfile,tempno,vars,chooseno);
 
@@ -746,6 +770,7 @@ int main(int argc, char* argv[]) {
                 outfile<<sol<<endl;
             }
         }
+        lineNum++;
     }
 
     outfile << "ret i32 0" << endl;
