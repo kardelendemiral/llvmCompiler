@@ -3,11 +3,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include <stdio.h>
-#include <string.h>
-#include <cstring>
 #include <stack>
-#include <queue>
 
 using namespace std;
 
@@ -21,29 +17,6 @@ stack<string> tepetaklak(stack<string> s){
     }
     return t;
 }
-void printStack(stack<string> s){
-    stack<string> tmp;
-    while(!s.empty()){
-        tmp.push(s.top());
-        s.pop();
-    }
-    while(!tmp.empty()){
-        cout << tmp.top() <<" ";
-        tmp.pop();
-    }
-}
-void printStack(stack<char> s){
-    stack<char> tmp;
-    while(!s.empty()){
-        tmp.push(s.top());
-        s.pop();
-    }
-    while(!tmp.empty()){
-        cout << tmp.top() <<" ";
-        tmp.pop();
-    }
-}
-
 string whitespace(string x){ //whitespaceleri siliyo sağdan ve soldan, çok gerekcek diye methoda geçirdim
     while(x[0]==' '){  //bastaki boslukları sil
         x=x.substr(1);
@@ -103,7 +76,7 @@ stack<string> infixToPostfix(string str){
             operand=s.substr(i,length);
             if(operand=="choose"){
                 string a=s.substr(i);
-                int ilk=a.find("(");
+                int ilk=a.find('(');
                 int chooselength=length;
                 int count=1;
                 int k=ilk+1;
@@ -190,13 +163,13 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
 
 
     outfile<<"%t"<<ini<<" = "<< op <<" i32 "; //add sub vs yazılıyo
-    if(xi==true){  //bunların hepsi int ise % yazmaması gerektiği için yazıldı
+    if(xi){  //bunların hepsi int ise % yazmaması gerektiği için yazıldı
         outfile<<"%t"<<tempno<<", ";  //çok uzun saçma bi kod oldu ben mal mıyım :(
         tempno++;
     }else{
         outfile<<x2<<", ";
     }
-    if(xb==true){
+    if(xb){
         outfile<<"%t"<<tempno<<endl;
         tempno++;
     }else{
@@ -283,8 +256,8 @@ string muko(string expr,ofstream& outfile,int& tempno,vector<string> &vars,int c
 }
 
 string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,int &tempno){ //her türlü choose1 temporary döndercek
-    int acpar=line.find("(");
-    int kappar=line.find_last_of(")");
+    int acpar=line.find('(');
+    int kappar=line.find_last_of(')');
     string incho=line.substr(acpar+1,kappar-acpar-1);
     char v=',';
     vector<int> virguller(3);
@@ -353,7 +326,7 @@ bool isValidVariableName(string str){
 bool errorCatchForExpressions(string s){
 
     s=whitespace(s);
-    if(s.find("=")!=-1 ){ //bunlar varsa error
+    if(s.find('=')!=-1 ){ //bunlar varsa error
         return false;
     }
     if(s.length()==0){
@@ -363,7 +336,7 @@ bool errorCatchForExpressions(string s){
 
         return false;
     }
-    if(s.find("(")!=-1 || s.find(")")!=-1){ //parantez checki
+    if(s.find('(')!=-1 || s.find(')')!=-1){ //parantez checki
         stack<char> st;
         for(int i=0;i<s.length();i++){
             if(s[i]=='('){
@@ -406,7 +379,7 @@ bool errorCatchForExpressions(string s){
             }
             if(operand=="choose"){
                 string a=s.substr(i);
-                int ilk=a.find("(");
+                int ilk=a.find('(');
                 int chooselength=length;
                 int count=1;
                 int k=ilk+1;
@@ -423,8 +396,8 @@ bool errorCatchForExpressions(string s){
                 operand=s.substr(i,chooselength+1);
                 //  cout<<operand<<endl;
                 i=i+chooselength;
-                int acpar=operand.find("(");
-                int kappar=operand.find_last_of(")");
+                int acpar=operand.find('(');
+                int kappar=operand.find_last_of(')');
                 string incho=operand.substr(acpar+1,kappar-acpar-1);
                 char v=',';
                 vector<int> virguller(3);
@@ -515,7 +488,7 @@ bool errorCatchForExpressions(string s){
     //orn print st ise icindeki expressionı buraya yollicak 5++ 3 -4//? falan diye saçmalamış mı diye bakcaz
 }
 bool errorCatch(string line, bool inWhile ,bool inIf){
-    int comment=line.find("#");
+    int comment=line.find('#');
     if(comment!=-1){
         line=line.substr(0,comment); //commentli kısmı kestik attık
     }
@@ -574,7 +547,7 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
             return false;
         }
     }
-    int eq=line.find("=");
+    int eq=line.find('=');
     if(eq!=-1){
         string left=line.substr(0,eq);
         string right=line.substr(eq+1);
@@ -632,15 +605,15 @@ int main(int argc, char* argv[]) {
         }
         if(line.substr(0,6)=="while " || line.substr(0,6)=="while("){
             inWhile=true;
-            line=line.substr(line.find("(")+1);
+            line=line.substr(line.find('(')+1);
         } else if (line.substr(0,3)=="if " || line.substr(0,3)=="if("){
             inIf=true;
-            line=line.substr(line.find("(")+1);
+            line=line.substr(line.find('(')+1);
         } else if(line.substr(0,6)=="print " || line.substr(0,6)=="print("){
-            line=line.substr(line.find("(")+1);
+            line=line.substr(line.find('(')+1);
         }
-        if(line.find("#")!=-1){
-            line=line.substr(0,line.find("#"));
+        if(line.find('#')!=-1){
+            line=line.substr(0,line.find('#'));
         }
 
         for(int i=0;i<line.length();i++){
@@ -691,7 +664,7 @@ int main(int argc, char* argv[]) {
     //BISMILLAHIRRAHMANIRRAHIM ALLAH CC HELP US IF YOU EXIST
     //dunyanın en basıc kodunu gormeye hazır ol <3
     while(getline(infile,line)){
-        int found=line.find("=");
+        int found=line.find('=');
         bool whil=false;
         bool ifSt=false;
         bool printSt=false;
@@ -741,8 +714,8 @@ int main(int argc, char* argv[]) {
             string expr;
             string sol;
             if(whil || printSt || ifSt){
-                int acpar=line.find("(");
-                int kappar=line.find_last_of(")");
+                int acpar=line.find('(');
+                int kappar=line.find_last_of(')');
                 expr=line.substr(acpar+1,kappar-acpar-1); //parantezin içini aldım
                 expr=whitespace(expr);
                 // cout << expr << endl;
@@ -777,9 +750,9 @@ int main(int argc, char* argv[]) {
             } else if(assignment){
                 outfile<<"store i32 "<<res<<", i32* %";
                 //tempno++;
-                string sol=line.substr(0,found); // buralar hep yazdırma kısmı
-                sol=whitespace(sol);
-                outfile<<sol<<endl;
+                string sl=line.substr(0,found); // buralar hep yazdırma kısmı
+                sl=whitespace(sl);
+                outfile<<sl<<endl;
             }
         }
     }
