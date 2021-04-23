@@ -224,11 +224,11 @@ string muko(string expr,ofstream& outfile,int& tempno,vector<string> &vars,int c
             return str;
         }
 
-        if(find(vars.begin(),vars.end(),str)==vars.end()){  //variablelarda yok allocate etcez
+        /*if(find(vars.begin(),vars.end(),str)==vars.end()){  //variablelarda yok allocate etcez
             outfile << "%" << str <<" = alloca i32" << endl;
             outfile << "store i32 0, i32* %" << str << endl;
             vars.push_back(str);
-        }
+        }*/
         outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl; //variable olduğu için load ediyoz
         tempno++;
         return "%t"+to_string(tempno-1);
@@ -249,20 +249,20 @@ string muko(string expr,ofstream& outfile,int& tempno,vector<string> &vars,int c
             if(x1.substr(0,6)=="choose"){
                 chooseno++;
                 x1=choose(chooseno,x1,outfile,vars,tempno);
-            } else if(find(vars.begin(),vars.end(),x1)==vars.end()&&!isInt(x1)&&x1[0]!='%'){ //variablelarda yok allocate etcez
+            } /*else if(find(vars.begin(),vars.end(),x1)==vars.end()&&!isInt(x1)&&x1[0]!='%'){ //variablelarda yok allocate etcez
                 outfile << "%" << x1 <<" = alloca i32" << endl;
                 outfile << "store i32 0, i32* %" << x1 << endl;
                 vars.push_back(x1);
-            }
+            }*/
 
             if(x2.substr(0,6)=="choose"){
                 chooseno++;
                 x2=choose(chooseno,x2,outfile,vars,tempno);
-            } else if(find(vars.begin(),vars.end(),x2)==vars.end()&&!isInt(x2)&&x2[0]!='%'){ //variablelarda yok allocate etcez
+            } /* else if(find(vars.begin(),vars.end(),x2)==vars.end()&&!isInt(x2)&&x2[0]!='%'){ //variablelarda yok allocate etcez
                 outfile << "%" << x2 <<" = alloca i32" << endl;
                 outfile << "store i32 0, i32* %" << x2 << endl;
                 vars.push_back(x2);
-            }
+            } */
 
             operation(x1,x2,op,tempno,vars,outfile);//bunu yukarda açıklıyom add falan yazdırılan kısım bu
 
@@ -332,36 +332,10 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
 
     return "%t"+to_string(tempno-1);
 
-    /*
-    outfile << "br i1 %t" <<tempno<<", label %exp2"<<chooseno<<", label %exp2"<<chooseno<<"end" << endl;
-    tempno++;
-    outfile << "exp2"<<chooseno <<":"<<endl;
-    string res2=muko(exp2,outfile,tempno,vars,chooseno);
-    outfile<<"%choose"<<chooseno<<" = select i1 true, i32 "<<res2<<",i32 0"<<endl;
-    outfile<<"br label %choose"<<chooseno<<"end"<<endl;
-    outfile << "exp2"<<chooseno<<"end:"<<endl;
-    outfile << "%t" <<tempno << " = icmp ugt i32 " << res1 << ", 0" <<endl; //pozitifse doğru
-    outfile << "br i1 %t" <<tempno<<", label %exp3"<<chooseno<<", label %exp3"<<chooseno<<"end"<< endl;
-    tempno++;
-    outfile << "exp3"<<chooseno<<":" <<endl;
-    string res3=muko(exp3,outfile,tempno,vars,chooseno);
-    outfile<<"%choose"<<chooseno<<" = select i1 true, i32 "<<res3<<",i32 0"<<endl;
-    outfile<<"br label %choose"<<chooseno<<"end"<<endl;
-    outfile << "exp3"<<chooseno<<"end:"<<endl;
-    outfile << "%t" <<tempno << " = icmp ult i32 " << res1 << ", 0" <<endl; //pozitifse doğru
-    outfile << "br i1 %t" <<tempno<<", label %exp4"<<chooseno<<", label %exp4"<<chooseno<<"end"<< endl;
-    tempno++;
-    outfile << "exp4"<<chooseno <<":"<<endl;
-    string res4=muko(exp4,outfile,tempno,vars,chooseno);
-    outfile<<"%choose"<<chooseno<<" = select i1 true, i32 "<<res4<<",i32 0"<<endl;
-    outfile<<"br label %choose"<<chooseno<<"end"<<endl;
-    outfile << "exp4"<<chooseno<<"end:"<< endl;
-    outfile<<"choose"<<chooseno<<"end:"<<endl;
-    //chooseno++;
-    return "choose"+to_string(chooseno);*/
 
 }
 bool isValidVariableName(string str){
+    str=whitespace(str);
     if(str==""){
         return false;
     }
@@ -425,7 +399,6 @@ bool errorCatchForExpressions(string s){
         if(notOperation){
             string operand;
             operand=s.substr(i,length);
-            isValidVariableName(operand);
 
             if(operand=="if"|| operand=="while"|| operand=="print"){
 
@@ -640,25 +613,62 @@ int main(int argc, char* argv[]) {
     outfile<< endl;
 
     string line;
-
-
+    bool inWhile;
+    bool inIf;
+    int lineNum=1;
 
     while(getline(infile,line)){
-
-        int found=line.find("=");
-
-        if(found != string::npos ){
-            string s=line.substr(0,found);
-            s=whitespace(s);
-            if(!count(vars.begin(), vars.end(), s)){ //variable vectorde yoksa vektore ekleyip allocate ediyoz
-                vars.push_back(s);
-                outfile << "%" << s <<" = alloca i32" << endl;
+        line = whitespace(line);
+        if(!errorCatch(line,inWhile,inIf)){
+            cout << "Line "<<lineNum<<": syntax error" << endl;
+            return 0;
+        }
+        if(line=="}"){
+            if(inIf){
+                inIf=false;
+            } else if(inWhile){
+                inWhile=false;
             }
         }
+        if(line.substr(0,6)=="while " || line.substr(0,6)=="while("){
+            inWhile=true;
+            line=line.substr(line.find("(")+1);
+        } else if (line.substr(0,3)=="if " || line.substr(0,3)=="if("){
+            inIf=true;
+            line=line.substr(line.find("(")+1);
+        } else if(line.substr(0,6)=="print " || line.substr(0,6)=="print("){
+            line=line.substr(line.find("(")+1);
+        }
+        if(line.find("#")!=-1){
+            line=line.substr(0,line.find("#"));
+        }
+
+        for(int i=0;i<line.length();i++){
+            bool isOperand=false;
+            int length=0;
+            int j=i;
+            while(line[j]!=' '&&line[j]!='('&& line[j]!=')'&& line[j]!='*'&&line[j]!='+'&&line[j]!='/'&&line[j]!='-'&&line[j]!=','&&line[j]!='}'&&line[j]!='{'&&line[j]!='='&&j<line.length()){
+                isOperand=true;
+                length++;
+                j++;
+            }
+            string operand=line.substr(i,length);
+            operand=whitespace(operand);
+            if(isValidVariableName(operand)){
+                i=j-1;
+                if(find(vars.begin(),vars.end(),operand)==vars.end()){
+                    vars.push_back(operand);
+                }
+            }
+        }
+
+        lineNum++;
+
     }
     outfile << endl;
 
     for(int i=0;i<vars.size();i++){
+        outfile << "%" << vars[i] <<" = alloca i32" << endl;
         outfile << "store i32 0, i32* %" << vars[i] << endl;
 
     }
@@ -671,9 +681,11 @@ int main(int argc, char* argv[]) {
     /* int a=1;
      choose(a,"choose( n+1 ,  9,   8, choose(o*h ,1,2,3) )",outfile,vars,tempno);*/
 
-    bool inWhile=false;
-    bool inIf=false;
-    int lineNum=1;
+    inWhile=false;
+    inIf=false;
+    int ifNo=0;
+    int whileNo=0;
+    //int lineNum=1;
     //cout<<errorCatch(" a=choose(4,3,2,1)",inWhile,inIf);
 
     //BISMILLAHIRRAHMANIRRAHIM ALLAH CC HELP US IF YOU EXIST
@@ -685,42 +697,41 @@ int main(int argc, char* argv[]) {
         bool printSt=false;
         bool assignment=false;
 
-        if(!errorCatch(line,inWhile,inIf)){
-            cout << "Line "<<lineNum<<": syntax error" << endl;
-            return 0;
-        }
+        line=whitespace(line);
 
         if(found!=string::npos){
             assignment=true;
         }
 
         if(whitespace(line)=="}"&&inWhile){ //while'ın içindeysek ve while bittiyse
-            outfile << "br label %whcond" << endl;
+            outfile << "br label %whcond"<<whileNo << endl;
             outfile << endl;
-            outfile << "whend:" << endl << endl;
+            outfile << "whend"<<whileNo<<":" << endl << endl;
             inWhile=false;
+            whileNo++;
         }
 
         if(whitespace(line)=="}"&&inIf){ //if'in içindeysek ve if bittiyse
-            outfile<<"br label %ifend"<<endl;
-            outfile << "ifend:" <<endl<< endl;
+            outfile<<"br label %ifend"<<ifNo<<endl;
+            outfile << "ifend"<<ifNo<<":" <<endl<< endl;
             inIf=false;
+            ifNo++;
         }
 
-        if(line.find("while")!=-1){//while ise
+        if(line.substr(0,6)=="while " || line.substr(0,6)=="while("){//while ise
             whil=true;
             inWhile=true;
             outfile<<endl;
-            outfile << "br label %whcond" << endl;
-            outfile<<"whcond:"<<endl;
+            outfile << "br label %whcond"<<whileNo << endl;
+            outfile<<"whcond"<<whileNo<<":"<<endl;
         }
-        if(line.find("print")!=-1){ //print ise
+        if(line.substr(0,6)=="print " || line.substr(0,6)=="print("){ //print ise
             printSt=true;
         }
 
-        if(line.find("if")!=-1){ //if ise
-            outfile << "br label %ifcond" << endl;
-            outfile << "ifcond:" << endl;
+        if(line.substr(0,3)=="if " || line.substr(0,3)=="if("){ //if ise
+            outfile << "br label %ifcond"<<ifNo<< endl;
+            outfile << "ifcond"<<ifNo<<":" << endl;
             ifSt=true;
             inIf=true;
         }
@@ -741,27 +752,27 @@ int main(int argc, char* argv[]) {
                 sol=line.substr(0,found); //assignmentın sol kısmı
                 expr=whitespace(expr);
                 sol=whitespace(sol);
-                if(find(vars.begin(),vars.end(),sol)==vars.end()){
+                /*if(find(vars.begin(),vars.end(),sol)==vars.end()){
                     outfile << "%" << sol <<" = alloca i32" << endl;
                     outfile << "store i32 0, i32* %" << sol << endl;
                     vars.push_back(sol);
-                }
+                }*/
             }
             string res=muko(expr,outfile,tempno,vars,chooseno);
 
             if(whil){ //while ise yazılan şeyler
                 outfile<<"%t"<<tempno<<" = icmp ne i32 "<<res<<", 0"<<endl; //buraya tam ne yazcağımızı anlamadım tekrar bakmak lazım
-                outfile<<"br i1 %t"<<tempno<<", label %whbody, label %whend"<<endl; //"    "    " "    "       "     "
+                outfile<<"br i1 %t"<<tempno<<", label %whbody"<<whileNo<<", label %whend"<<whileNo<<endl; //"    "    " "    "       "     "
                 outfile<<endl;
-                outfile<<"whbody:"<<endl;
+                outfile<<"whbody"<<whileNo<<":"<<endl;
                 tempno++;
             } else if(printSt){
                 outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " << res<<" )"<<endl;
             } else if(ifSt){
                 outfile<<"%t"<<tempno<<" = icmp ne i32 "<<res<<", 0"<<endl;
-                outfile<<"br i1 %t"<<tempno<<", label %ifbody, label %ifend"<<endl;
+                outfile<<"br i1 %t"<<tempno<<", label %ifbody"<<ifNo<<", label %ifend"<<ifNo<<endl;
                 outfile << endl;
-                outfile << "ifbody:" << endl;
+                outfile << "ifbody"<<ifNo<<":" << endl;
                 tempno++;
             } else if(assignment){
                 outfile<<"store i32 "<<res<<", i32* %";
@@ -771,7 +782,6 @@ int main(int argc, char* argv[]) {
                 outfile<<sol<<endl;
             }
         }
-        lineNum++;
     }
 
     outfile << "ret i32 0" << endl;
