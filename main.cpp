@@ -530,7 +530,7 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
             return true;
         }
     }
-    if(line.substr(0,5)=="while"){
+    if(line.substr(0,6)=="while "||line.substr(0,6)=="while("){
         if(inWhile || inIf){
             return false;
         }
@@ -548,7 +548,7 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
             return false;
         }
     }
-    if(line.substr(0,5)=="print"){
+    if(line.substr(0,6)=="print "||line.substr(0,6)=="print("){
         if(line[5]=='(' && line[line.length()-1]==')'){
             return errorCatchForExpressions(line.substr(6,line.length()-7));
         } else {
@@ -556,7 +556,7 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
         }
 
     }
-    if(line.substr(0,2)=="if"){
+    if(line.substr(0,3)=="if "||line.substr(0,3)=="if("){
         if(inWhile || inIf){
             return false;
         }
@@ -613,8 +613,8 @@ int main(int argc, char* argv[]) {
     outfile<< endl;
 
     string line;
-    bool inWhile;
-    bool inIf;
+    bool inWhile=false;
+    bool inIf=false;
     int lineNum=1;
 
     while(getline(infile,line)){
