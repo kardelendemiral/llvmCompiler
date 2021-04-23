@@ -372,15 +372,24 @@ bool errorCatchForExpressions(string s){
         if(notOperation){
             string operand;
             operand=s.substr(i,length);
+            isValidVariableName(operand);
 
-            if(operand=="if"|| operand=="while"|| operand=="print"){
+            if(operand=="if"|| operand=="while"|| operand=="print" ){
 
                 return false;
             }
-            if(operand=="choose"){
+            if(operand=="choose"){ //choose   (1,2,3,4)
                 string a=s.substr(i);
                 int ilk=a.find('(');
                 int chooselength=length;
+                int e=a.find('e');
+                for(int w=e+1; w<ilk; w++){
+                    if(a[w]==' '){
+                        chooselength++;
+                    }else{
+                        return false;
+                    }
+                }
                 int count=1;
                 int k=ilk+1;
                 //cout <<"ilk "<< ilk <<endl;
@@ -405,16 +414,16 @@ bool errorCatchForExpressions(string s){
                 int countt=0;
                 int vco=0;
                 stack<char> vi;
-                for(int i=0; i<incho.length();i++){ //a=13*choose(2,10,4,choose(2,(14+2)/13*(9),2*100*5/10,m))
-                    if(incho[i]=='('){
+                for(int p=0; p<incho.length();p++){ //a=13*choose(2,10,4,choose(2,(14+2)/13*(9),2*100*5/10,m))
+                    if(incho[p]=='('){
                         vi.push('(');
                     }
-                    if(incho[i]==')'){
+                    if(incho[p]==')'){
                         if(!vi.empty()){
                             vi.pop();
                         }
                     }
-                    if(incho[i]==',' && vi.empty()){
+                    if(incho[p]==',' && vi.empty()){
                         vco++;
                     }
                 }
@@ -422,13 +431,13 @@ bool errorCatchForExpressions(string s){
 
                     return false;
                 }
-                for(int i=0;i<incho.length();i++){
-                    if(incho[i]==','&&!parantez){
-                        virguller[countt]=i;
+                for(int y=0;y<incho.length();y++){
+                    if(incho[y]==','&&!parantez){
+                        virguller[countt]=y;
                         countt++;
-                    } else if(incho[i]=='('){
+                    } else if(incho[y]=='('){
                         parantez=true;
-                    } else if(incho[i]==')'){
+                    } else if(incho[y]==')'){
                         parantez=false;
                     }
                 }
@@ -627,6 +636,10 @@ int main(int argc, char* argv[]) {
             }
             string operand=line.substr(i,length);
             operand=whitespace(operand);
+            if(operand=="choose"){
+                i=j-1;
+                continue;
+            }
             if(isValidVariableName(operand)){
                 i=j-1;
                 if(find(vars.begin(),vars.end(),operand)==vars.end()){
