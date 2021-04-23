@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -21,7 +22,7 @@ string whitespace(string x){ //whitespaceleri siliyo sağdan ve soldan, çok ger
     while(x[0]==' ' || x[0]=='\t'){  //bastaki boslukları sil
         x=x.substr(1);
     }
-    while(x[x.size()-1]==' '||x[x.size()-1]=='\t'){  //sondaki boslukları sil
+    while(x[x.size()-1]==' '||x[x.size()-1]=='\t'||x[x.size()-1]=='\n'){  //sondaki boslukları sil
         x=x.substr(0,x.size()-1);
     }
     return x;
@@ -30,7 +31,7 @@ string whitespace(string x){ //whitespaceleri siliyo sağdan ve soldan, çok ger
 bool isInt(string s){
     s=whitespace(s);
     for(int i=0;i<s.length();i++){
-        if(s.at(i)<48 || s.at(i)>57){
+        if(s.at(i)<'0' || s.at(i)>'9'){
             return false;
         }
     }
@@ -193,18 +194,18 @@ string muko(string expr,ofstream& outfile,int& tempno,vector<string> &vars,int c
             chooseno++;
             return choose(chooseno,expr,outfile,vars,tempno);
         }
-        if(isInt(str)){ //sayı ya da tempse kendini dönüyoz
-            return str;
+        if(find(vars.begin(),vars.end(),expr)!=vars.end()){
+            outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl; //variable olduğu için load ediyoz
+            tempno++;
+            return "%t"+to_string(tempno-1);
         }
+        return expr;
 
         /*if(find(vars.begin(),vars.end(),str)==vars.end()){  //variablelarda yok allocate etcez
             outfile << "%" << str <<" = alloca i32" << endl;
             outfile << "store i32 0, i32* %" << str << endl;
             vars.push_back(str);
         }*/
-        outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl; //variable olduğu için load ediyoz
-        tempno++;
-        return "%t"+to_string(tempno-1);
 
     }
 
@@ -343,7 +344,7 @@ bool errorCatchForExpressions(string s){
                 st.push('(');
             }else if(s[i]==')'){
                 if(st.empty() || st.top()!='('){
-                    cout<<"false";
+                    //cout<<"false";
                     return false;
                 }
                 st.pop();
@@ -601,16 +602,18 @@ int main(int argc, char* argv[]) {
 
     while(getline(infile,line)){
         line = whitespace(line);
+        if(line.find('#')!=-1){
+            line=line.substr(0,line.find('#'));
+        }
         if(line.length()==0){
             continue;
         }
-       /* if(!errorCatch(line,inWhile,inIf)){
+        if(!errorCatch(line,inWhile,inIf)){
             cout << "Line "<<lineNum<<": syntax error" << endl;
             outfile << "ret i32 0" << endl;
             outfile << "}";
             return 0;
         }
-        */
 
         if(line=="}"){
             if(inIf){
@@ -627,9 +630,6 @@ int main(int argc, char* argv[]) {
             line=line.substr(line.find('(')+1);
         } else if(line.substr(0,6)=="print " || line.substr(0,6)=="print("){
             line=line.substr(line.find('(')+1);
-        }
-        if(line.find('#')!=-1){
-            line=line.substr(0,line.find('#'));
         }
 
         for(int i=0;i<line.length();i++){
@@ -658,13 +658,12 @@ int main(int argc, char* argv[]) {
         lineNum++;
 
     }
-   /* if(inWhile||inIf){
+    if(inWhile||inIf){
         cout << "Line "<<lineNum-1<<": syntax error" << endl;
         outfile << "ret i32 0" << endl;
         outfile << "}";
         return 0;
     }
-*/
     outfile << endl;
 
 
@@ -703,7 +702,11 @@ int main(int argc, char* argv[]) {
             line=line.substr(0,line.find('#'));
         }
 
+        line=whitespace(line);
 
+        if(line==""){
+            continue;
+        }
 
         if(found!=string::npos){
             assignment=true;
