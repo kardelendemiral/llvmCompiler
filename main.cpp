@@ -630,12 +630,12 @@ int main(int argc, char* argv[]) {
             lineNum++;
             continue;
         }
-       /* if(!errorCatch(line,inWhile,inIf)){
+       if(!errorCatch(line,inWhile,inIf)){
             cout << "Line "<<lineNum<<": syntax error" << endl;
             outfile << "ret i32 0" << endl;
             outfile << "}";
             return 0;
-        }*/
+        }
 
         if(line=="}"){
             if(inIf){
@@ -681,16 +681,16 @@ int main(int argc, char* argv[]) {
 
     }
 
-    for(int i=0;i<vars.size();i++){
+    /*for(int i=0;i<vars.size();i++){
         cout << vars[i]<<endl;
-    }
+    }*/
 
-   /* if(inWhile||inIf){
+   if(inWhile||inIf){
         cout << "Line "<<lineNum-1<<": syntax error" << endl;
         outfile << "ret i32 0" << endl;
         outfile << "}";
         return 0;
-    }*/
+    }
     outfile << endl;
 
 
