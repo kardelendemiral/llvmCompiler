@@ -19,10 +19,10 @@ stack<string> tepetaklak(stack<string> s){
     return t;
 }
 string whitespace(string x){ //whitespaceleri siliyo sağdan ve soldan, çok gerekcek diye methoda geçirdim
-    while(x[0]==' ' || x[0]=='\t'){  //bastaki boslukları sil
+    while(x[0]==' ' || x[0]=='\t'||x[0]=='\n'||x[0]=='\r'){  //bastaki boslukları sil
         x=x.substr(1);
     }
-    while(x[x.size()-1]==' '||x[x.size()-1]=='\t'||x[x.size()-1]=='\n'){  //sondaki boslukları sil
+    while(x[x.size()-1]==' '||x[x.size()-1]=='\t'||x[x.size()-1]=='\n'||x[x.size()-1]=='\r'){  //sondaki boslukları sil
         x=x.substr(0,x.size()-1);
     }
     return x;
@@ -630,12 +630,12 @@ int main(int argc, char* argv[]) {
             lineNum++;
             continue;
         }
-        if(!errorCatch(line,inWhile,inIf)){
+       /* if(!errorCatch(line,inWhile,inIf)){
             cout << "Line "<<lineNum<<": syntax error" << endl;
             outfile << "ret i32 0" << endl;
             outfile << "}";
             return 0;
-        }
+        }*/
 
         if(line=="}"){
             if(inIf){
@@ -685,12 +685,12 @@ int main(int argc, char* argv[]) {
         cout << vars[i]<<endl;
     }
 
-    if(inWhile||inIf){
+   /* if(inWhile||inIf){
         cout << "Line "<<lineNum-1<<": syntax error" << endl;
         outfile << "ret i32 0" << endl;
         outfile << "}";
         return 0;
-    }
+    }*/
     outfile << endl;
 
 
