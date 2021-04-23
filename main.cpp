@@ -18,10 +18,10 @@ stack<string> tepetaklak(stack<string> s){
     return t;
 }
 string whitespace(string x){ //whitespaceleri siliyo sağdan ve soldan, çok gerekcek diye methoda geçirdim
-    while(x[0]==' '){  //bastaki boslukları sil
+    while(x[0]==' ' || x[0]=='\t'){  //bastaki boslukları sil
         x=x.substr(1);
     }
-    while(x[x.size()-1]==' '){  //sondaki boslukları sil
+    while(x[x.size()-1]==' '||x[x.size()-1]=='\t'){  //sondaki boslukları sil
         x=x.substr(0,x.size()-1);
     }
     return x;
@@ -150,7 +150,7 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
         op="sdiv";
     }
     //cout<<"x1: "<<x1<<"x2: "<<x2<<endl;
-    if(find(var.begin(),var.end(),x2)!=var.end()){ //eğer vectorde varsa int değil
+    if(count(var.begin(),var.end(),x2)){ //eğer vectorde varsa int değil
         outfile<<"%t"<<ini<<" = load i32* %"<<x2<<endl;
         xi=true;
         ini++;
@@ -316,7 +316,7 @@ bool isValidVariableName(string str){
         return false;
     }
     for(int i=1;i<str.length();i++){
-        if(!(str[i]>='0'&&str[i]<='9')&&!(str[i]>='a'&&str[i]<='z')&&!(str[i]>='A'&&str[i]<='Z')){
+        if(!(str[i]>='0'&&str[i]<='9')&&!(str[i]>='a'&&str[i]<='z')&&!(str[i]>='A'&&str[i]<='Z')&&str[i]!='_'){
             return false;
         }
     }
@@ -370,7 +370,7 @@ bool errorCatchForExpressions(string s){
             j++;
         }
         if(notOperation){
-            string operand;
+            string operand="";
             operand=s.substr(i,length);
             isValidVariableName(operand);
 
@@ -502,7 +502,7 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
         line=line.substr(0,comment); //commentli kısmı kestik attık
     }
     line=whitespace(line);
-    if(line==""){ //bos line sa true
+    if(line.empty()){ //bos line sa true
         return true;
     }
     if(line=="}" ){
@@ -601,10 +601,17 @@ int main(int argc, char* argv[]) {
 
     while(getline(infile,line)){
         line = whitespace(line);
-        if(!errorCatch(line,inWhile,inIf)){
+        if(line.length()==0){
+            continue;
+        }
+       /* if(!errorCatch(line,inWhile,inIf)){
             cout << "Line "<<lineNum<<": syntax error" << endl;
+            outfile << "ret i32 0" << endl;
+            outfile << "}";
             return 0;
         }
+        */
+
         if(line=="}"){
             if(inIf){
                 inIf=false;
@@ -651,7 +658,15 @@ int main(int argc, char* argv[]) {
         lineNum++;
 
     }
+   /* if(inWhile||inIf){
+        cout << "Line "<<lineNum-1<<": syntax error" << endl;
+        outfile << "ret i32 0" << endl;
+        outfile << "}";
+        return 0;
+    }
+*/
     outfile << endl;
+
 
     for(int i=0;i<vars.size();i++){
         outfile << "%" << vars[i] <<" = alloca i32" << endl;
@@ -677,13 +692,18 @@ int main(int argc, char* argv[]) {
     //BISMILLAHIRRAHMANIRRAHIM ALLAH CC HELP US IF YOU EXIST
     //dunyanın en basıc kodunu gormeye hazır ol <3
     while(getline(infile,line)){
+        line=whitespace(line);
         int found=line.find('=');
         bool whil=false;
         bool ifSt=false;
         bool printSt=false;
         bool assignment=false;
 
-        line=whitespace(line);
+        if(line.find('#')!=-1){
+            line=line.substr(0,line.find('#'));
+        }
+
+
 
         if(found!=string::npos){
             assignment=true;
