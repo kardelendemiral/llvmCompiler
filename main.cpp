@@ -264,7 +264,9 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
     vector<int> virguller(3);
     bool parantez=false;
     int count=0;
-    for(int i=0;i<incho.length();i++){
+    int vco=0;
+    stack<char>vi;
+    /*for(int i=0;i<incho.length();i++){
         if(incho[i]==','&&!parantez){
             virguller[count]=i;
             count++;
@@ -272,6 +274,22 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
             parantez=true;
         } else if(incho[i]==')'){
             parantez=false;
+        }
+    }*/
+
+    for(int p=0; p<incho.length();p++){ //a=13*choose(2,10,4,choose(2,(14+2)/13*(9),2*100*5/10,m))
+        if(incho[p]=='('){
+            vi.push('(');    //choose(1,5853013,4280901,choose(0, 4674117, choose(1,5853013,4281377,4280901),5853013)),0-1 * 0+1,5853013,0*0 + 0/1
+        }
+        if(incho[p]==')'){
+            if(!vi.empty()){
+                vi.pop();
+            }
+        }
+        if(incho[p]==',' && vi.empty()){
+            virguller[vco]=p;
+            //cout<<p<<endl;
+            vco++;
         }
     }
 
@@ -409,6 +427,7 @@ bool errorCatchForExpressions(string s){
                 int acpar=operand.find('(');
                 int kappar=operand.find_last_of(')');
                 string incho=operand.substr(acpar+1,kappar-acpar-1);
+                //cout <<incho << endl;
                 char v=',';
                 vector<int> virguller(3);
                 bool parantez=false;
@@ -417,7 +436,7 @@ bool errorCatchForExpressions(string s){
                 stack<char> vi;
                 for(int p=0; p<incho.length();p++){ //a=13*choose(2,10,4,choose(2,(14+2)/13*(9),2*100*5/10,m))
                     if(incho[p]=='('){
-                        vi.push('(');
+                        vi.push('(');    //choose(1,5853013,4280901,choose(0, 4674117, choose(1,5853013,4281377,4280901),5853013)),0-1 * 0+1,5853013,0*0 + 0/1
                     }
                     if(incho[p]==')'){
                         if(!vi.empty()){
@@ -425,6 +444,8 @@ bool errorCatchForExpressions(string s){
                         }
                     }
                     if(incho[p]==',' && vi.empty()){
+                        virguller[vco]=p;
+                        //cout<<p<<endl;
                         vco++;
                     }
                 }
@@ -432,7 +453,7 @@ bool errorCatchForExpressions(string s){
 
                     return false;
                 }
-                for(int y=0;y<incho.length();y++){
+                /*for(int y=0;y<incho.length();y++){
                     if(incho[y]==','&&!parantez){
                         virguller[countt]=y;
                         countt++;
@@ -441,7 +462,7 @@ bool errorCatchForExpressions(string s){
                     } else if(incho[y]==')'){
                         parantez=false;
                     }
-                }
+                }*/
                 string exp1=incho.substr(0,virguller[0]);  //expressionları tek tek aldım
                 string exp2=incho.substr(virguller[0]+1,virguller[1]-virguller[0]-1);
                 string exp3=incho.substr(virguller[1]+1,virguller[2]-virguller[1]-1);
@@ -598,7 +619,7 @@ int main(int argc, char* argv[]) {
     string line;
     bool inWhile=false;
     bool inIf=false;
-    int lineNum=1;
+    int lineNum=0;
 
     while(getline(infile,line)){
         line = whitespace(line);
@@ -606,6 +627,7 @@ int main(int argc, char* argv[]) {
             line=line.substr(0,line.find('#'));
         }
         if(line.length()==0){
+            lineNum++;
             continue;
         }
         if(!errorCatch(line,inWhile,inIf)){
@@ -658,6 +680,11 @@ int main(int argc, char* argv[]) {
         lineNum++;
 
     }
+
+    for(int i=0;i<vars.size();i++){
+        cout << vars[i]<<endl;
+    }
+
     if(inWhile||inIf){
         cout << "Line "<<lineNum-1<<": syntax error" << endl;
         outfile << "ret i32 0" << endl;
