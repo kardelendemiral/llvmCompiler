@@ -19,11 +19,20 @@ stack<string> tepetaklak(stack<string> s){
     return t;
 }
 string whitespace(string x){ //whitespaceleri siliyo sağdan ve soldan, çok gerekcek diye methoda geçirdim
-    while(x[0]==' ' || x[0]=='\t'||x[0]=='\n'||x[0]=='\r'){  //bastaki boslukları sil
-        x=x.substr(1);
+    if(x.length()==0){
+        return x;
     }
-    while(x[x.size()-1]==' '||x[x.size()-1]=='\t'||x[x.size()-1]=='\n'||x[x.size()-1]=='\r'){  //sondaki boslukları sil
+    while(isspace(x[0])){  //bastaki boslukları sil
+        x=x.substr(1);
+        if(x.length()==0){
+        return x;
+     }
+    }
+    while(isspace(x[x.size()-1])){  //sondaki boslukları sil
         x=x.substr(0,x.size()-1);
+        if(x.length()==0){
+        return x;
+    }
     }
     return x;
 }
@@ -56,7 +65,7 @@ stack<string> infixToPostfix(string str){
     string s="";
 
     for(int i=0;i<str.length();i++){
-        if(str[i]!=' '){
+        if(!isspace(str[i])){
             s=s+str[i];
         }
     }
@@ -377,13 +386,13 @@ bool errorCatchForExpressions(string s){
 
     for(int i=0;i<s.length();i++){
         //cout << s[i] << endl;
-        if(s[i]==' '){
+        if(isspace(s[i])){
             continue;
         }
         bool notOperation=false;
         int length=0;
         int j=i;
-        while(s[j]!='('&& s[j]!=')'&& s[j]!='*'&&s[j]!='+'&&s[j]!='/'&&s[j]!='-'&&s[j]!=' ' &&j<s.length()){ //variableları alıyo
+        while(s[j]!='('&& s[j]!=')'&& s[j]!='*'&&s[j]!='+'&&s[j]!='/'&&s[j]!='-'&&!isspace(s[j]) &&j<s.length()){ //variableları alıyo
             notOperation=true;
             length++;
             j++;
@@ -403,7 +412,7 @@ bool errorCatchForExpressions(string s){
                 int chooselength=length;
                 int e=a.find('e');
                 for(int w=e+1; w<ilk; w++){
-                    if(a[w]==' '){
+                    if(isspace(a[w])){
                         chooselength++;
                     }else{
                         return false;
@@ -477,10 +486,10 @@ bool errorCatchForExpressions(string s){
             }
             bool f=false;
             for(int k=i+1;k<s.length();k++){ //burda i+1 mi j+1 mi olacak emin değilim
-                if(s[k]!=' '){//
+                if(!isspace(s[k])){//
                     f=true;
                 }
-                if(s[k]!='+' && s[k]!='-' &&s[k]!='*' && s[k]!='/'&& s[k]!=')' &&s[k]!=' ' ){ //variabledan sonra bunlardan biri yoksa error
+                if(s[k]!='+' && s[k]!='-' &&s[k]!='*' && s[k]!='/'&& s[k]!=')' &&!isspace(s[k])){ //variabledan sonra bunlardan biri yoksa error
 
                     return false;
                 }
@@ -492,17 +501,17 @@ bool errorCatchForExpressions(string s){
         } else{ //operatorlerden sonra bunlar yoksa error
             bool m=false;  //(3+6) -9
             for(int q=j+1;q<s.length();q++){ //burda i+1 mi j+1 mi olacak emin değilim
-                if(s[q]!=' '){ //boşluk değilse buldu bir sonrakini
+                if(!isspace(s[q])){ //boşluk değilse buldu bir sonrakini
                     m=true;
                 } else {
                     continue;
                 }
                 if(s[j]==')'){
-                    if(s[q]!='+' && s[q]!='-' &&s[q]!='*' && s[q]!='/'&& s[q]!=')' &&s[q]!=' '){
+                    if(s[q]!='+' && s[q]!='-' &&s[q]!='*' && s[q]!='/'&& s[q]!=')' &&!isspace(s[q])){
                         return false;
                     }
 
-                } else if( (s[q]<48||s[q]>57)&&(s[q]<65||s[q]>90)&&(s[q]<97||s[q]>122) && s[q]!='(' && s[q]!=' '){//+-*/(
+                } else if( (s[q]<48||s[q]>57)&&(s[q]<65||s[q]>90)&&(s[q]<97||s[q]>122) && s[q]!='(' && !isspace(s[q])){//+-*/(
                     return false;
                 }
                 if(m){
@@ -534,16 +543,16 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
             return true;
         }
     }
-    if(line.substr(0,6)=="while "||line.substr(0,6)=="while("){
+    if(line.substr(0,6)=="while "||line.substr(0,6)=="while(" || line.substr(0,6)=="while\t"){
         if(inWhile || inIf){
             return false;
         }
         int firstpr=5;
-        while(line[firstpr]==' '&&firstpr<line.length()){
+        while(isspace(line[firstpr])&&firstpr<line.length()){
             firstpr++;
         }
         int lastpr=line.length()-2; // } dan bi önceki
-        while(line[lastpr]==' '&&lastpr>=0){
+        while(isspace(line[lastpr])&&lastpr>=0){
             lastpr--;
         }
         if(line[firstpr]=='(' && line[lastpr]==')' && line[line.length()-1]=='{'){
@@ -552,24 +561,32 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
             return false;
         }
     }
-    if(line.substr(0,6)=="print "||line.substr(0,6)=="print("){
-        if(line[5]=='(' && line[line.length()-1]==')'){
+    if(line.substr(0,6)=="print "||line.substr(0,6)=="print("|| line.substr(0,6)=="print\t"){
+        int firstpr=5;
+        while(isspace(line[firstpr])&&firstpr<line.length()){
+            firstpr++;
+        }
+        int lastpr=line.length()-1;
+        while(isspace(line[lastpr])&&lastpr>=0){
+            lastpr--;
+        }
+        if(line[firstpr]=='(' && line[lastpr]==')'){
             return errorCatchForExpressions(line.substr(6,line.length()-7));
         } else {
             return false;
         }
 
     }
-    if(line.substr(0,3)=="if "||line.substr(0,3)=="if("){
+    if(line.substr(0,3)=="if "||line.substr(0,3)=="if(" || line.substr(0,3)=="if\t"){
         if(inWhile || inIf){
             return false;
         }
         int firstpr=2;
-        while(line[firstpr]==' '&&firstpr<line.length()){
+        while(isspace(line[firstpr])&&firstpr<line.length()){  //while      m   (  c)
             firstpr++;
         }
         int lastpr=line.length()-2; // } dan bi önceki
-        while(line[lastpr]==' '&&lastpr>=0){
+        while(isspace(line[lastpr])&&lastpr>=0){
             lastpr--;
         }
         if(line[firstpr]=='(' && line[lastpr]==')' && line[line.length()-1]=='{'){
@@ -644,13 +661,13 @@ int main(int argc, char* argv[]) {
                 inWhile=false;
             }
         }
-        if(line.substr(0,6)=="while " || line.substr(0,6)=="while("){
+        if(line.substr(0,6)=="while " || line.substr(0,6)=="while(" ||line.substr(0,6)=="while\t"){
             inWhile=true;
             line=line.substr(line.find('(')+1);
-        } else if (line.substr(0,3)=="if " || line.substr(0,3)=="if("){
+        } else if (line.substr(0,3)=="if " || line.substr(0,3)=="if(" || line.substr(0,3)=="if\t"){
             inIf=true;
             line=line.substr(line.find('(')+1);
-        } else if(line.substr(0,6)=="print " || line.substr(0,6)=="print("){
+        } else if(line.substr(0,6)=="print " || line.substr(0,6)=="print(" || line.substr(0,6)=="print\t"){
             line=line.substr(line.find('(')+1);
         }
 
@@ -658,7 +675,7 @@ int main(int argc, char* argv[]) {
             bool isOperand=false;
             int length=0;
             int j=i;
-            while(line[j]!=' '&&line[j]!='('&& line[j]!=')'&& line[j]!='*'&&line[j]!='+'&&line[j]!='/'&&line[j]!='-'&&line[j]!=','&&line[j]!='}'&&line[j]!='{'&&line[j]!='='&&j<line.length()){
+            while(!isspace(line[j])&&line[j]!='('&& line[j]!=')'&& line[j]!='*'&&line[j]!='+'&&line[j]!='/'&&line[j]!='-'&&line[j]!=','&&line[j]!='}'&&line[j]!='{'&&line[j]!='='&&j<line.length()){
                 isOperand=true;
                 length++;
                 j++;
@@ -754,18 +771,18 @@ int main(int argc, char* argv[]) {
             ifNo++;
         }
 
-        if(line.substr(0,6)=="while " || line.substr(0,6)=="while("){//while ise
+        if(line.substr(0,6)=="while " || line.substr(0,6)=="while(" ||line.substr(0,6)=="while\t"){//while ise
             whil=true;
             inWhile=true;
             outfile<<endl;
             outfile << "br label %whcond"<<whileNo << endl;
             outfile<<"whcond"<<whileNo<<":"<<endl;
         }
-        if(line.substr(0,6)=="print " || line.substr(0,6)=="print("){ //print ise
+        if(line.substr(0,6)=="print " || line.substr(0,6)=="print(" || line.substr(0,6)=="print\t"){ //print ise
             printSt=true;
         }
 
-        if(line.substr(0,3)=="if " || line.substr(0,3)=="if("){ //if ise
+        if(line.substr(0,3)=="if " || line.substr(0,3)=="if(" || line.substr(0,3)=="if\t"){ //if ise
             outfile << "br label %ifcond"<<ifNo<< endl;
             outfile << "ifcond"<<ifNo<<":" << endl;
             ifSt=true;
