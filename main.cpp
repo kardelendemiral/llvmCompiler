@@ -22,13 +22,13 @@ string whitespace(string x){ //erases the white spaces in a string from its begi
     if(x.length()==0){
         return x;
     }
-    while(isspace(x[0])){  //bastaki boslukları sil
+    while(isspace(x[0])){  
         x=x.substr(1);
         if(x.length()==0){
         return x;
      }
     }
-    while(isspace(x[x.size()-1])){  //sondaki boslukları sil
+    while(isspace(x[x.size()-1])){  
         x=x.substr(0,x.size()-1);
         if(x.length()==0){
         return x;
@@ -130,11 +130,7 @@ stack<string> infixToPostfix(string str){ //converts an infix notation to postfi
                 tmp.push(s[i]);
             }
         }
-        /*cout << i << ": " << "tmp: ";
-        printStack(tmp);
-        cout << "output: ";
-        printStack(output);
-        cout << endl;*/
+       
     }
     while(!tmp.empty()){
         string a(1,tmp.top());
@@ -382,7 +378,7 @@ bool errorCatchForExpressions(string s){ //error checker function for expression
 
                 return false;
             }
-            if(operand=="choose"){ //if it is choose function, chech if it has syntax error
+            if(operand=="choose"){ //if it is choose function, check if it has syntax error
                 string a=s.substr(i);
                 int ilk=a.find('(');
                 int chooselength=length;
@@ -419,7 +415,7 @@ bool errorCatchForExpressions(string s){ //error checker function for expression
                 int countt=0;
                 int vco=0;
                 stack<char> vi;
-                for(int p=0; p<incho.length();p++){ 
+                for(int p=0; p<incho.length();p++){  //almost to same code in the choose function to specify the locations of commas 
                     if(incho[p]=='('){
                         vi.push('(');   
                     }
@@ -448,7 +444,7 @@ bool errorCatchForExpressions(string s){ //error checker function for expression
                         parantez=false;
                     }
                 }*/
-                string exp1=incho.substr(0,virguller[0]);  //expressionları tek tek aldım
+                string exp1=incho.substr(0,virguller[0]);  //seperate all four variables, see if they are valid expressions
                 string exp2=incho.substr(virguller[0]+1,virguller[1]-virguller[0]-1);
                 string exp3=incho.substr(virguller[1]+1,virguller[2]-virguller[1]-1);
                 string exp4=incho.substr(virguller[2]+1,kappar-virguller[2]-1);
@@ -461,11 +457,11 @@ bool errorCatchForExpressions(string s){ //error checker function for expression
                 i=j-1;
             }
             bool f=false;
-            for(int k=i+1;k<s.length();k++){ //burda i+1 mi j+1 mi olacak emin değilim
-                if(!isspace(s[k])){//
+            for(int k=i+1;k<s.length();k++){ 
+                if(!isspace(s[k])){
                     f=true;
                 }
-                if(s[k]!='+' && s[k]!='-' &&s[k]!='*' && s[k]!='/'&& s[k]!=')' &&!isspace(s[k])){ //variabledan sonra bunlardan biri yoksa error
+                if(s[k]!='+' && s[k]!='-' &&s[k]!='*' && s[k]!='/'&& s[k]!=')' &&!isspace(s[k])){ //after a variable, one of these should come
 
                     return false;
                 }
@@ -474,10 +470,10 @@ bool errorCatchForExpressions(string s){ //error checker function for expression
                 }
             }
 
-        } else{ //operatorlerden sonra bunlar yoksa error
-            bool m=false;  //(3+6) -9
-            for(int q=j+1;q<s.length();q++){ //burda i+1 mi j+1 mi olacak emin değilim
-                if(!isspace(s[q])){ //boşluk değilse buldu bir sonrakini
+        } else{ 
+            bool m=false; 
+            for(int q=j+1;q<s.length();q++){ 
+                if(!isspace(s[q])){ 
                     m=true;
                 } else {
                     continue;
@@ -500,26 +496,24 @@ bool errorCatchForExpressions(string s){ //error checker function for expression
 
     }
     return true;
-    //bu finksiyonu asağıdaki fonksiyonun içinde çağırcaz
-    //orn print st ise icindeki expressionı buraya yollicak 5++ 3 -4//? falan diye saçmalamış mı diye bakcaz
 }
-bool errorCatch(string line, bool inWhile ,bool inIf){
+bool errorCatch(string line, bool inWhile ,bool inIf){ //this function checks if a line is correct in terms the language syntax
     int comment=line.find('#');
     if(comment!=-1){
-        line=line.substr(0,comment); //commentli kısmı kestik attık
+        line=line.substr(0,comment); //erase the comments
     }
     line=whitespace(line);
-    if(line.empty()){ //bos line sa true
+    if(line.empty()){ //empty lines are ok
         return true;
     }
-    if(line=="}" ){
+    if(line=="}" ){ //we should be in a loop for this to come
         if(!inIf && !inWhile){
             return false;
         } else {
             return true;
         }
     }
-    if(line.substr(0,6)=="while "||line.substr(0,6)=="while(" || line.substr(0,6)=="while\t"){
+    if(line.substr(0,6)=="while "||line.substr(0,6)=="while(" || line.substr(0,6)=="while\t"){ //while statement
         if(inWhile || inIf){
             return false;
         }
@@ -537,7 +531,7 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
             return false;
         }
     }
-    if(line.substr(0,6)=="print "||line.substr(0,6)=="print("|| line.substr(0,6)=="print\t"){
+    if(line.substr(0,6)=="print "||line.substr(0,6)=="print("|| line.substr(0,6)=="print\t"){  //print statement
         int firstpr=5;
         while(isspace(line[firstpr])&&firstpr<line.length()){
             firstpr++;
@@ -553,7 +547,7 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
         }
 
     }
-    if(line.substr(0,3)=="if "||line.substr(0,3)=="if(" || line.substr(0,3)=="if\t"){
+    if(line.substr(0,3)=="if "||line.substr(0,3)=="if(" || line.substr(0,3)=="if\t"){  //if statement
         if(inWhile || inIf){
             return false;
         }
@@ -571,7 +565,7 @@ bool errorCatch(string line, bool inWhile ,bool inIf){
             return false;
         }
     }
-    int eq=line.find('=');
+    int eq=line.find('='); //assignment statement
     if(eq!=-1){
         string left=line.substr(0,eq);
         string right=line.substr(eq+1);
@@ -598,7 +592,7 @@ int main(int argc, char* argv[]) {
     outfile.open(outfileName);
 
 
-    vector<string> vars; //variable'lar bu vectorde hep
+    vector<string> vars; //variables are in this vector
     bool syntaxError=false;
     int tempno=1;
     int chooseno=1;
@@ -614,16 +608,16 @@ int main(int argc, char* argv[]) {
     bool inIf=false;
     int lineNum=0;
 
-    while(getline(infile,line)){
-        line = whitespace(line);
+    while(getline(infile,line)){ //in this loop, we read the whole file line by line, check the errors and if there is an error the program terminates after giving the error. 
+        line = whitespace(line);         //also in this loop we take all the variables in the program and push them to the variable list to allocate them in the beginning
         if(line.find('#')!=-1){
-            line=line.substr(0,line.find('#'));
+            line=line.substr(0,line.find('#')); //errase the comments
         }
         if(line.length()==0){
             lineNum++;
             continue;
         }
-       if(!errorCatch(line,inWhile,inIf)){
+       if(!errorCatch(line,inWhile,inIf)){ //if there is error, write it. then terminate
             cout << "Line "<<lineNum<<": syntax error" << endl;
             outfile << "ret i32 0" << endl;
             outfile << "}";
@@ -647,7 +641,7 @@ int main(int argc, char* argv[]) {
             line=line.substr(line.find('(')+1);
         }
 
-        for(int i=0;i<line.length();i++){
+        for(int i=0;i<line.length();i++){ //here we take the variables
             bool isOperand=false;
             int length=0;
             int j=i;
