@@ -372,7 +372,9 @@ bool errorCatchForExpressions(string s){ //error checker function for expression
         if(notOperation){
             string operand="";
             operand=s.substr(i,length);
-            isValidVariableName(operand);
+            if(!isInt(operand) && !isValidVariableName(operand)){
+                return false;
+            }
 
             if(operand=="if"|| operand=="while"|| operand=="print" ){ //they cannot be variables
 
