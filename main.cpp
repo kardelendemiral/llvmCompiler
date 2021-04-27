@@ -439,16 +439,7 @@ bool errorCatchForExpressions(string s){ //error checker function for expression
 
                     return false;
                 }
-                /*for(int y=0;y<incho.length();y++){
-                    if(incho[y]==','&&!parantez){
-                        virguller[countt]=y;
-                        countt++;
-                    } else if(incho[y]=='('){
-                        parantez=true;
-                    } else if(incho[y]==')'){
-                        parantez=false;
-                    }
-                }*/
+                
                 string exp1=incho.substr(0,virguller[0]);  //seperate all four variables, see if they are valid expressions
                 string exp2=incho.substr(virguller[0]+1,virguller[1]-virguller[0]-1);
                 string exp3=incho.substr(virguller[1]+1,virguller[2]-virguller[1]-1);
@@ -588,12 +579,12 @@ bool errorCatch(string line, bool inWhile ,bool inIf){ //this function checks if
 int main(int argc, char* argv[]) {
 
     string infileName=argv[1];
-    string outfileName=argv[2];
 
     ifstream infile;
     ofstream outfile;
 
     infile.open(infileName);
+    string outfileName=infileName.substr(0,infileName.find('.'))+".ll";
     outfile.open(outfileName);
 
 
@@ -672,10 +663,6 @@ int main(int argc, char* argv[]) {
         lineNum++;
 
     }
-
-    /*for(int i=0;i<vars.size();i++){
-        cout << vars[i]<<endl;
-    }*/
 
    if(inWhile||inIf){ //if the program ends without ending a loop, give an error
         cout << "Line "<<lineNum-1<<": syntax error" << endl;
