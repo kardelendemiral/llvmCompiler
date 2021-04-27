@@ -521,7 +521,7 @@ bool errorCatch(string line, bool inWhile ,bool inIf){ //this function checks if
         while(isspace(line[firstpr])&&firstpr<line.length()){
             firstpr++;
         }
-        int lastpr=line.length()-2; // } dan bi önceki
+        int lastpr=line.length()-2; 
         while(isspace(line[lastpr])&&lastpr>=0){
             lastpr--;
         }
@@ -672,7 +672,7 @@ int main(int argc, char* argv[]) {
         cout << vars[i]<<endl;
     }*/
 
-   if(inWhile||inIf){
+   if(inWhile||inIf){ //if the program ends without ending a loop, give an error
         cout << "Line "<<lineNum-1<<": syntax error" << endl;
         outfile << "ret i32 0" << endl;
         outfile << "}";
@@ -681,7 +681,7 @@ int main(int argc, char* argv[]) {
     outfile << endl;
 
 
-    for(int i=0;i<vars.size();i++){
+    for(int i=0;i<vars.size();i++){ //allocate all the variables and store 0
         outfile << "%" << vars[i] <<" = alloca i32" << endl;
         outfile << "store i32 0, i32* %" << vars[i] << endl;
 
@@ -689,22 +689,18 @@ int main(int argc, char* argv[]) {
 
     outfile << endl;
 
-    infile.clear(); //burda file'ı okuduk bitti tekrar başlamak istiyoz o yüzden bu satırları yazmam gerekti
+    infile.clear(); //we'll read the file again
     infile.seekg(0, infile.beg);
 
-    /* int a=1;
-     choose(a,"choose( n+1 ,  9,   8, choose(o*h ,1,2,3) )",outfile,vars,tempno);*/
-
+    
     inWhile=false;
     inIf=false;
     int ifNo=0;
     int whileNo=0;
-    //int lineNum=1;
-    //cout<<errorCatch(" a=choose(4,3,2,1)",inWhile,inIf);
-
-    //BISMILLAHIRRAHMANIRRAHIM ALLAH CC HELP US IF YOU EXIST
-    //dunyanın en basıc kodunu gormeye hazır ol <3
-    while(getline(infile,line)){
+   
+    
+    
+    while(getline(infile,line)){ //the main while
         line=whitespace(line);
         int found=line.find('=');
         bool whil=false;
@@ -712,7 +708,7 @@ int main(int argc, char* argv[]) {
         bool printSt=false;
         bool assignment=false;
 
-        if(line.find('#')!=-1){
+        if(line.find('#')!=-1){ //erase the comments
             line=line.substr(0,line.find('#'));
         }
 
@@ -726,7 +722,7 @@ int main(int argc, char* argv[]) {
             assignment=true;
         }
 
-        if(whitespace(line)=="}"&&inWhile){ //while'ın içindeysek ve while bittiyse
+        if(whitespace(line)=="}"&&inWhile){ //if this line is the end of a while body
             outfile << "br label %whcond"<<whileNo << endl;
             outfile << endl;
             outfile << "whend"<<whileNo<<":" << endl << endl;
@@ -734,25 +730,25 @@ int main(int argc, char* argv[]) {
             whileNo++;
         }
 
-        if(whitespace(line)=="}"&&inIf){ //if'in içindeysek ve if bittiyse
+        if(whitespace(line)=="}"&&inIf){ //if this line is the end of an if body
             outfile<<"br label %ifend"<<ifNo<<endl;
             outfile << "ifend"<<ifNo<<":" <<endl<< endl;
             inIf=false;
             ifNo++;
         }
 
-        if(line.substr(0,6)=="while " || line.substr(0,6)=="while(" ||line.substr(0,6)=="while\t"){//while ise
+        if(line.substr(0,6)=="while " || line.substr(0,6)=="while(" ||line.substr(0,6)=="while\t"){//while statement
             whil=true;
             inWhile=true;
             outfile<<endl;
             outfile << "br label %whcond"<<whileNo << endl;
             outfile<<"whcond"<<whileNo<<":"<<endl;
         }
-        if(line.substr(0,6)=="print " || line.substr(0,6)=="print(" || line.substr(0,6)=="print\t"){ //print ise
+        if(line.substr(0,6)=="print " || line.substr(0,6)=="print(" || line.substr(0,6)=="print\t"){ //print statement
             printSt=true;
         }
 
-        if(line.substr(0,3)=="if " || line.substr(0,3)=="if(" || line.substr(0,3)=="if\t"){ //if ise
+        if(line.substr(0,3)=="if " || line.substr(0,3)=="if(" || line.substr(0,3)=="if\t"){ //if statement
             outfile << "br label %ifcond"<<ifNo<< endl;
             outfile << "ifcond"<<ifNo<<":" << endl;
             ifSt=true;
@@ -766,26 +762,23 @@ int main(int argc, char* argv[]) {
             if(whil || printSt || ifSt){
                 int acpar=line.find('(');
                 int kappar=line.find_last_of(')');
-                expr=line.substr(acpar+1,kappar-acpar-1); //parantezin içini aldım
+                expr=line.substr(acpar+1,kappar-acpar-1); //take the inside of the parantheses
                 expr=whitespace(expr);
                 // cout << expr << endl;
 
             } else {
-                expr=line.substr(found+1); //assignmentin expr kısmı
-                sol=line.substr(0,found); //assignmentın sol kısmı
+                expr=line.substr(found+1); //assignment's expr part
+                sol=line.substr(0,found); //assignment's variable part
                 expr=whitespace(expr);
                 sol=whitespace(sol);
-                /*if(find(vars.begin(),vars.end(),sol)==vars.end()){
-                    outfile << "%" << sol <<" = alloca i32" << endl;
-                    outfile << "store i32 0, i32* %" << sol << endl;
-                    vars.push_back(sol);
-                }*/
+                
             }
-            string res=muko(expr,outfile,tempno,vars,chooseno);
+            string res=muko(expr,outfile,tempno,vars,chooseno); //fill the llvm file for the calculation of the expression
 
-            if(whil){ //while ise yazılan şeyler
-                outfile<<"%t"<<tempno<<" = icmp ne i32 "<<res<<", 0"<<endl; //buraya tam ne yazcağımızı anlamadım tekrar bakmak lazım
-                outfile<<"br i1 %t"<<tempno<<", label %whbody"<<whileNo<<", label %whend"<<whileNo<<endl; //"    "    " "    "       "     "
+            //the below part is the writing part according the current statement type
+            if(whil){ 
+                outfile<<"%t"<<tempno<<" = icmp ne i32 "<<res<<", 0"<<endl; 
+                outfile<<"br i1 %t"<<tempno<<", label %whbody"<<whileNo<<", label %whend"<<whileNo<<endl; 
                 outfile<<endl;
                 outfile<<"whbody"<<whileNo<<":"<<endl;
                 tempno++;
@@ -800,7 +793,7 @@ int main(int argc, char* argv[]) {
             } else if(assignment){
                 outfile<<"store i32 "<<res<<", i32* %";
                 //tempno++;
-                string sl=line.substr(0,found); // buralar hep yazdırma kısmı
+                string sl=line.substr(0,found);
                 sl=whitespace(sl);
                 outfile<<sl<<endl;
             }
