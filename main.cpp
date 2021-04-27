@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -195,16 +194,16 @@ string muko(string expr,ofstream& outfile,int& tempno,vector<string> &vars,int c
 
     if(s.size()==1){ //if there's only one element in the stack then the expression is integer, variable or the choose function
         string str=s.top();
-        if(expr.substr(0,6)=="choose"&&expr[expr.length()-1]==')'){ //choose
+        if(str.substr(0,6)=="choose"&&str[str.length()-1]==')'){ //choose
             chooseno++;
-            return choose(chooseno,expr,outfile,vars,tempno);
+            return choose(chooseno,str,outfile,vars,tempno);
         }
-        if(find(vars.begin(),vars.end(),expr)!=vars.end()){ //variable
-            outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl; 
+        if(find(vars.begin(),vars.end(),str)!=vars.end()){ //variable
+            outfile<<"%t"<<tempno<<" = load i32* %"<<str<<endl; 
             tempno++;
             return "%t"+to_string(tempno-1);
         }
-        return expr; //integer
+        return str; //integer
 
     }
 
@@ -336,6 +335,10 @@ bool errorCatchForExpressions(string s){ //error checker function for expression
 
         return false;
     }
+    if((s[s.length()-1]<48||s[s.length()-1]>57)&&(s[s.length()-1]<65||s[s.length()-1]>90)&&(s[s.length()-1]<97||s[s.length()-1]>122) && s[s.length()-1]!=')'){
+        return false;
+    }
+
     if(s.find('(')!=-1 || s.find(')')!=-1){ //check if the parantheses are balanced
         stack<char> st;
         for(int i=0;i<s.length();i++){
@@ -473,7 +476,7 @@ bool errorCatchForExpressions(string s){ //error checker function for expression
             }
 
         } else{ 
-            bool m=false; 
+            bool m=false;
             for(int q=j+1;q<s.length();q++){ 
                 if(!isspace(s[q])){ 
                     m=true;
@@ -543,7 +546,7 @@ bool errorCatch(string line, bool inWhile ,bool inIf){ //this function checks if
             lastpr--;
         }
         if(line[firstpr]=='(' && line[lastpr]==')'){
-            return errorCatchForExpressions(line.substr(6,line.length()-7));
+            return errorCatchForExpressions(line.substr(firstpr+1,lastpr-firstpr-1));
         } else {
             return false;
         }
