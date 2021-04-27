@@ -58,7 +58,7 @@ int precedence ( char a ){ //this function is used in the infixtopostfix functio
     }
     return 0;
 }
-stack<string> infixToPostfix(string str){ //converts an infix notation to postfix notation
+stack<string> infixToPostfix(string str){ //converts an infix notation to postfix notation. it also recognizes choose functions as whole then push them to the stack just like the integers and variables
     stack<string> output;
     stack<char> tmp;
 
@@ -188,73 +188,59 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
 }
 
 
-string muko(string expr,ofstream& outfile,int& tempno,vector<string> &vars,int chooseno){
+string muko(string expr,ofstream& outfile,int& tempno,vector<string> &vars,int chooseno){ //this is the most inportant function in the program. it takes expressions, analyze them and do the necessary operations callling the other functions
 
     expr=whitespace(expr);
 
 
-    stack<string> s=tepetaklak(infixToPostfix(expr)); //stack i ters çevirmem gerekti doğru sırayla poplamak için
-    stack<string> t; //temporary bir stack bu operator gelene kadar popladıklarımızı burda tutuyoz operator bulunca geri 2 tane popluyoz
+    stack<string> s=tepetaklak(infixToPostfix(expr)); 
+    stack<string> t; 
     //printStack(s);
 
-    if(s.size()==1){ //stackte sadece 1 şey varsa expression sadece 1 elemanlıdır
+    if(s.size()==1){ //if there's only one element in the stack then the expression is integer, variable or the choose function
         string str=s.top();
-        if(expr.substr(0,6)=="choose"&&expr[expr.length()-1]==')'){ //sagda sadece choose var
+        if(expr.substr(0,6)=="choose"&&expr[expr.length()-1]==')'){ //choose
             chooseno++;
             return choose(chooseno,expr,outfile,vars,tempno);
         }
-        if(find(vars.begin(),vars.end(),expr)!=vars.end()){
-            outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl; //variable olduğu için load ediyoz
+        if(find(vars.begin(),vars.end(),expr)!=vars.end()){ //variable
+            outfile<<"%t"<<tempno<<" = load i32* %"<<expr<<endl; 
             tempno++;
             return "%t"+to_string(tempno-1);
         }
-        return expr;
-
-        /*if(find(vars.begin(),vars.end(),str)==vars.end()){  //variablelarda yok allocate etcez
-            outfile << "%" << str <<" = alloca i32" << endl;
-            outfile << "store i32 0, i32* %" << str << endl;
-            vars.push_back(str);
-        }*/
+        return expr; //integer
 
     }
 
     while(!s.empty()){
-        if(s.top()=="+" || s.top()=="*" || s.top()=="/" || s.top()=="-"){ //eğer operator bulursa tempteki 2 taneyi poplayacak
+        if(s.top()=="+" || s.top()=="*" || s.top()=="/" || s.top()=="-"){ 
             string op=s.top();
             s.pop();
             string x1=t.top();
             t.pop();
             string x2=t.top();
             t.pop();
-            x1=whitespace(x1); //bunlarsız boku yiyoruz
-            x2=whitespace(x2); //    "      "      "
+            x1=whitespace(x1); 
+            x2=whitespace(x2); 
 
             if(x1.substr(0,6)=="choose"){
                 chooseno++;
                 x1=choose(chooseno,x1,outfile,vars,tempno);
-            } /*else if(find(vars.begin(),vars.end(),x1)==vars.end()&&!isInt(x1)&&x1[0]!='%'){ //variablelarda yok allocate etcez
-                outfile << "%" << x1 <<" = alloca i32" << endl;
-                outfile << "store i32 0, i32* %" << x1 << endl;
-                vars.push_back(x1);
-            }*/
+            }
 
             if(x2.substr(0,6)=="choose"){
                 chooseno++;
                 x2=choose(chooseno,x2,outfile,vars,tempno);
-            } /* else if(find(vars.begin(),vars.end(),x2)==vars.end()&&!isInt(x2)&&x2[0]!='%'){ //variablelarda yok allocate etcez
-                outfile << "%" << x2 <<" = alloca i32" << endl;
-                outfile << "store i32 0, i32* %" << x2 << endl;
-                vars.push_back(x2);
-            } */
+            }
 
-            operation(x1,x2,op,tempno,vars,outfile);//bunu yukarda açıklıyom add falan yazdırılan kısım bu
+            operation(x1,x2,op,tempno,vars,outfile); 
 
             if(!s.empty()){
-                string n="%t"+to_string(tempno); //buralar hep yazdırma kısmı
-                s.push(n); //vectore yeni variable ımızı pushladık
+                string n="%t"+to_string(tempno);
+                s.push(n);
                 tempno++;
             }
-        }else{ // operator değilse temp e pushluyoruz
+        }else{ 
             t.push(s.top());
             s.pop();
 
@@ -265,7 +251,7 @@ string muko(string expr,ofstream& outfile,int& tempno,vector<string> &vars,int c
 
 }
 
-string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,int &tempno){ //her türlü choose1 temporary döndercek
+string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,int &tempno){ //this function writes the necessary operations to the output file for the choose function
     int acpar=line.find('(');
     int kappar=line.find_last_of(')');
     string incho=line.substr(acpar+1,kappar-acpar-1);
@@ -275,20 +261,10 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
     int count=0;
     int vco=0;
     stack<char>vi;
-    /*for(int i=0;i<incho.length();i++){
-        if(incho[i]==','&&!parantez){
-            virguller[count]=i;
-            count++;
-        } else if(incho[i]=='('){
-            parantez=true;
-        } else if(incho[i]==')'){
-            parantez=false;
-        }
-    }*/
 
-    for(int p=0; p<incho.length();p++){ //a=13*choose(2,10,4,choose(2,(14+2)/13*(9),2*100*5/10,m))
+    for(int p=0; p<incho.length();p++){ //here we determine the locations of the commas in the inner expression of the choose function analyzing the parantheses
         if(incho[p]=='('){
-            vi.push('(');    //choose(1,5853013,4280901,choose(0, 4674117, choose(1,5853013,4281377,4280901),5853013)),0-1 * 0+1,5853013,0*0 + 0/1
+            vi.push('(');    
         }
         if(incho[p]==')'){
             if(!vi.empty()){
@@ -302,40 +278,40 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
         }
     }
 
-    string exp1=incho.substr(0,virguller[0]);  //expressionları tek tek aldım
+    string exp1=incho.substr(0,virguller[0]); //we seperate the for parameters for the choose function
     string exp2=incho.substr(virguller[0]+1,virguller[1]-virguller[0]-1);
     string exp3=incho.substr(virguller[1]+1,virguller[2]-virguller[1]-1);
     string exp4=incho.substr(virguller[2]+1,kappar-virguller[2]-1);
-    exp1=whitespace(exp1);   //buna gerek yok heralde ama yine de yapim dedim
+    exp1=whitespace(exp1);   //first expression
     exp2=whitespace(exp2);   //0
     exp3=whitespace(exp3);   //+
     exp4=whitespace(exp4);   //-
     //cout <<exp1 <<" "<<exp2 <<" "<<exp3 <<" "<<exp4 <<endl;
-    string res1=muko(exp1,outfile,tempno,vars,chooseno);
+    string res1=muko(exp1,outfile,tempno,vars,chooseno); //expressions are sent to the expression handler function
 
     string res2=muko(exp2,outfile,tempno,vars,chooseno);
     string res3=muko(exp3,outfile,tempno,vars,chooseno);
 
-    outfile << "%t" << tempno <<" = icmp eq i32 "<< res1 <<", 0" <<endl; //0 mı?
+    outfile << "%t" << tempno <<" = icmp eq i32 "<< res1 <<", 0" <<endl; //is it 0?
     tempno++;
 
-    outfile << "%t" << tempno << " = select i1 "<< "%t" <<tempno-1<< ", i32 " << res2 <<", i32 "<<res3 <<endl; //0'sa res2 değilse res3
+    outfile << "%t" << tempno << " = select i1 "<< "%t" <<tempno-1<< ", i32 " << res2 <<", i32 "<<res3 <<endl; //if 0 then res2 if not res3
     string a="%t"+to_string(tempno);
     tempno++;
 
     string res4=muko(exp4,outfile,tempno,vars,chooseno);
 
-    outfile << "%t" << tempno <<" = icmp slt i32 "<< res1 <<", 0" <<endl; //negatif mi?
+    outfile << "%t" << tempno <<" = icmp slt i32 "<< res1 <<", 0" <<endl; //is it negative?
     tempno++;
 
-    outfile << "%t" << tempno << " = select i1 "<< "%t" <<tempno-1<< ", i32 " << res4 <<", i32 "<<a <<endl; //negatifse res4 değilse önceki
+    outfile << "%t" << tempno << " = select i1 "<< "%t" <<tempno-1<< ", i32 " << res4 <<", i32 "<<a <<endl; //ig negative then res4 if not the one we select earlier
     tempno++;
 
     return "%t"+to_string(tempno-1);
 
 
 }
-bool isValidVariableName(string str){
+bool isValidVariableName(string str){ //this function is used in the error handler function to determine if a token have a valid variable name
     str=whitespace(str);
     if(str==""){
         return false;
@@ -351,20 +327,20 @@ bool isValidVariableName(string str){
     return true;
 }
 
-bool errorCatchForExpressions(string s){
+bool errorCatchForExpressions(string s){ //error checker function for expressions.
 
     s=whitespace(s);
-    if(s.find('=')!=-1 ){ //bunlar varsa error
+    if(s.find('=')!=-1 ){
         return false;
     }
     if(s.length()==0){
         return false;
     }
-    if((s[0]<48||s[0]>57)&&(s[0]<65||s[0]>90)&&(s[0]<97||s[0]>122) && s[0]!='('){ //bunlardan biriyle başlamıyosa error
+    if((s[0]<48||s[0]>57)&&(s[0]<65||s[0]>90)&&(s[0]<97||s[0]>122) && s[0]!='('){ 
 
         return false;
     }
-    if(s.find('(')!=-1 || s.find(')')!=-1){ //parantez checki
+    if(s.find('(')!=-1 || s.find(')')!=-1){ //check if the parantheses are balanced
         stack<char> st;
         for(int i=0;i<s.length();i++){
             if(s[i]=='('){
@@ -392,7 +368,7 @@ bool errorCatchForExpressions(string s){
         bool notOperation=false;
         int length=0;
         int j=i;
-        while(s[j]!='('&& s[j]!=')'&& s[j]!='*'&&s[j]!='+'&&s[j]!='/'&&s[j]!='-'&&!isspace(s[j]) &&j<s.length()){ //variableları alıyo
+        while(s[j]!='('&& s[j]!=')'&& s[j]!='*'&&s[j]!='+'&&s[j]!='/'&&s[j]!='-'&&!isspace(s[j]) &&j<s.length()){ //take the variables
             notOperation=true;
             length++;
             j++;
@@ -402,11 +378,11 @@ bool errorCatchForExpressions(string s){
             operand=s.substr(i,length);
             isValidVariableName(operand);
 
-            if(operand=="if"|| operand=="while"|| operand=="print" ){
+            if(operand=="if"|| operand=="while"|| operand=="print" ){ //they cannot be variables
 
                 return false;
             }
-            if(operand=="choose"){ //choose   (1,2,3,4)
+            if(operand=="choose"){ //if it is choose function, chech if it has syntax error
                 string a=s.substr(i);
                 int ilk=a.find('(');
                 int chooselength=length;
@@ -443,9 +419,9 @@ bool errorCatchForExpressions(string s){
                 int countt=0;
                 int vco=0;
                 stack<char> vi;
-                for(int p=0; p<incho.length();p++){ //a=13*choose(2,10,4,choose(2,(14+2)/13*(9),2*100*5/10,m))
+                for(int p=0; p<incho.length();p++){ 
                     if(incho[p]=='('){
-                        vi.push('(');    //choose(1,5853013,4280901,choose(0, 4674117, choose(1,5853013,4281377,4280901),5853013)),0-1 * 0+1,5853013,0*0 + 0/1
+                        vi.push('(');   
                     }
                     if(incho[p]==')'){
                         if(!vi.empty()){
