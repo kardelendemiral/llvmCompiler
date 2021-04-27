@@ -10,7 +10,7 @@ using namespace std;
 
 string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,int &tempno);
 
-stack<string> tepetaklak(stack<string> s){
+stack<string> tepetaklak(stack<string> s){ //reverses the output of the infixtopostfix function to use it in operations in the correct order
     stack<string> t;
     while(!s.empty()){
         t.push(s.top());
@@ -18,7 +18,7 @@ stack<string> tepetaklak(stack<string> s){
     }
     return t;
 }
-string whitespace(string x){ //whitespaceleri siliyo sağdan ve soldan, çok gerekcek diye methoda geçirdim
+string whitespace(string x){ //erases the white spaces in a string from its beginning and the end
     if(x.length()==0){
         return x;
     }
@@ -37,7 +37,7 @@ string whitespace(string x){ //whitespaceleri siliyo sağdan ve soldan, çok ger
     return x;
 }
 
-bool isInt(string s){
+bool isInt(string s){ //determines if the parameter string is an integer
     s=whitespace(s);
     for(int i=0;i<s.length();i++){
         if(s.at(i)<'0' || s.at(i)>'9'){
@@ -48,7 +48,7 @@ bool isInt(string s){
 }
 
 
-int precedence ( char a ){
+int precedence ( char a ){ //this function is used in the infixtopostfix function to determine precedences of the operations
     if(a == '+' || a =='-'){
         return 1;
     }
@@ -58,7 +58,7 @@ int precedence ( char a ){
     }
     return 0;
 }
-stack<string> infixToPostfix(string str){
+stack<string> infixToPostfix(string str){ //converts an infix notation to postfix notation
     stack<string> output;
     stack<char> tmp;
 
@@ -145,9 +145,9 @@ stack<string> infixToPostfix(string str){
     return output;
 }
 
-void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofstream& outfile){
-    bool xb=false;  //{x2 vectordeyse true oluyo ki tekrar yazmasın
-    bool xi=false;  //x1    "          "       "    "       "
+void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofstream& outfile){  //this function takes two operands and an operator, then writes the neccessary llvm codes to the output file using the operation and operand types
+    bool xb=false; 
+    bool xi=false;
 
     int ini=tempno;
     if(op=="+"){
@@ -160,21 +160,21 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
         op="sdiv";
     }
     //cout<<"x1: "<<x1<<"x2: "<<x2<<endl;
-    if(count(var.begin(),var.end(),x2)){ //eğer vectorde varsa int değil
+    if(count(var.begin(),var.end(),x2)){ //is the operand a variable?
         outfile<<"%t"<<ini<<" = load i32* %"<<x2<<endl;
         xi=true;
         ini++;
     }
-    if(count(var.begin(),var.end(),x1)){ //eğer vectorde varsa int değil demektir başında % olacak
+    if(count(var.begin(),var.end(),x1)){ 
         outfile<<"%t"<<ini<<" = load i32* %"<<x1<<endl;
         xb=true;
         ini++;
     }
 
 
-    outfile<<"%t"<<ini<<" = "<< op <<" i32 "; //add sub vs yazılıyo
-    if(xi){  //bunların hepsi int ise % yazmaması gerektiği için yazıldı
-        outfile<<"%t"<<tempno<<", ";  //çok uzun saçma bi kod oldu ben mal mıyım :(
+    outfile<<"%t"<<ini<<" = "<< op <<" i32 "; 
+    if(xi){ 
+        outfile<<"%t"<<tempno<<", ";  
         tempno++;
     }else{
         outfile<<x2<<", ";
