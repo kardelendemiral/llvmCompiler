@@ -594,10 +594,7 @@ int main(int argc, char* argv[]) {
     int chooseno=1;
 
     outfile << "; ModuleID = 'mylang2ir'\n"
-               "declare i32 @printf(i8*, ...)\n"
-               "@print.str = constant [4 x i8] c\"%d\\0A\\00\"" << endl << endl;
-    outfile<<"define i32 @main() {"<<endl;
-    outfile<< endl;
+               "declare i32 @printf(i8*, ...)\n"<< endl;
 
     string line;
     bool inWhile=false;
@@ -614,7 +611,9 @@ int main(int argc, char* argv[]) {
             continue;
         }
        if(!errorCatch(line,inWhile,inIf)){ //if there is error, write it. then terminate
-            cout << "Line "<<lineNum<<": syntax error" << endl;
+            outfile << "@print.str = constant [23 x i8] c\"Line %d: syntax error\\0A\\00\"" << endl << endl;
+            outfile<<"define i32 @main() {"<<endl;
+            outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([23 x i8]* @print.str, i32 0, i32 0), i32 " << lineNum<<" )"<<endl;
             outfile << "ret i32 0" << endl;
             outfile << "}";
             return 0;
@@ -665,12 +664,17 @@ int main(int argc, char* argv[]) {
     }
 
    if(inWhile||inIf){ //if the program ends without ending a loop, give an error
-        cout << "Line "<<lineNum-1<<": syntax error" << endl;
+        outfile << "@print.str = constant [23 x i8] c\"Line %d: syntax error\\0A\\00\"" << endl << endl;
+        outfile<<"define i32 @main() {"<<endl;
+        outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([23 x i8]* @print.str, i32 0, i32 0), i32 " << lineNum-1<<" )"<<endl;
         outfile << "ret i32 0" << endl;
         outfile << "}";
         return 0;
     }
     outfile << endl;
+
+    outfile <<"@print.str = constant [4 x i8] c\"%d\\0A\\00\"" << endl << endl;
+    outfile<<"define i32 @main() {"<<endl;
 
 
     for(int i=0;i<vars.size();i++){ //allocate all the variables and store 0
@@ -689,7 +693,6 @@ int main(int argc, char* argv[]) {
     inIf=false;
     int ifNo=0;
     int whileNo=0;
-   
     
     
     while(getline(infile,line)){ //the main while
