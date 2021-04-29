@@ -584,7 +584,7 @@ int main(int argc, char* argv[]) {
     ofstream outfile;
 
     infile.open(infileName);
-    string outfileName=infileName.substr(0,infileName.find('.'))+".ll";
+    string outfileName=infileName.substr(0,infileName.find_last_of('.'))+".ll";
     outfile.open(outfileName);
 
 
