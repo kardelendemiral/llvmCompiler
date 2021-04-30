@@ -156,26 +156,26 @@ void operation(string x1,string x2, string op,int& tempno,vector<string> var,ofs
     }
     //cout<<"x1: "<<x1<<"x2: "<<x2<<endl;
     if(count(var.begin(),var.end(),x2)){ //is the operand a variable?
-        outfile<<"%t"<<ini<<" = load i32* %"<<x2<<endl;
+        outfile<<"%karber"<<ini<<" = load i32* %"<<x2<<endl;
         xi=true;
         ini++;
     }
     if(count(var.begin(),var.end(),x1)){ 
-        outfile<<"%t"<<ini<<" = load i32* %"<<x1<<endl;
+        outfile<<"%karber"<<ini<<" = load i32* %"<<x1<<endl;
         xb=true;
         ini++;
     }
 
 
-    outfile<<"%t"<<ini<<" = "<< op <<" i32 "; 
+    outfile<<"%karber"<<ini<<" = "<< op <<" i32 "; 
     if(xi){ 
-        outfile<<"%t"<<tempno<<", ";  
+        outfile<<"%karber"<<tempno<<", ";  
         tempno++;
     }else{
         outfile<<x2<<", ";
     }
     if(xb){
-        outfile<<"%t"<<tempno<<endl;
+        outfile<<"%karber"<<tempno<<endl;
         tempno++;
     }else{
         outfile<<x1<<endl;
@@ -199,9 +199,9 @@ string muko(string expr,ofstream& outfile,int& tempno,vector<string> &vars,int c
             return choose(chooseno,str,outfile,vars,tempno);
         }
         if(find(vars.begin(),vars.end(),str)!=vars.end()){ //variable
-            outfile<<"%t"<<tempno<<" = load i32* %"<<str<<endl; 
+            outfile<<"%karber"<<tempno<<" = load i32* %"<<str<<endl; 
             tempno++;
-            return "%t"+to_string(tempno-1);
+            return "%karber"+to_string(tempno-1);
         }
         return str; //integer
 
@@ -231,7 +231,7 @@ string muko(string expr,ofstream& outfile,int& tempno,vector<string> &vars,int c
             operation(x1,x2,op,tempno,vars,outfile); 
 
             if(!s.empty()){
-                string n="%t"+to_string(tempno);
+                string n="%karber"+to_string(tempno);
                 s.push(n);
                 tempno++;
             }
@@ -242,7 +242,7 @@ string muko(string expr,ofstream& outfile,int& tempno,vector<string> &vars,int c
         }
     }
     tempno++;
-    return "%t"+to_string(tempno-1);
+    return "%karber"+to_string(tempno-1);
 
 }
 
@@ -287,22 +287,22 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
     string res2=muko(exp2,outfile,tempno,vars,chooseno);
     string res3=muko(exp3,outfile,tempno,vars,chooseno);
 
-    outfile << "%t" << tempno <<" = icmp eq i32 "<< res1 <<", 0" <<endl; //is it 0?
+    outfile << "%karber" << tempno <<" = icmp eq i32 "<< res1 <<", 0" <<endl; //is it 0?
     tempno++;
 
-    outfile << "%t" << tempno << " = select i1 "<< "%t" <<tempno-1<< ", i32 " << res2 <<", i32 "<<res3 <<endl; //if 0 then res2 if not res3
-    string a="%t"+to_string(tempno);
+    outfile << "%karber" << tempno << " = select i1 "<< "%karber" <<tempno-1<< ", i32 " << res2 <<", i32 "<<res3 <<endl; //if 0 then res2 if not res3
+    string a="%karber"+to_string(tempno);
     tempno++;
 
     string res4=muko(exp4,outfile,tempno,vars,chooseno);
 
-    outfile << "%t" << tempno <<" = icmp slt i32 "<< res1 <<", 0" <<endl; //is it negative?
+    outfile << "%karber" << tempno <<" = icmp slt i32 "<< res1 <<", 0" <<endl; //is it negative?
     tempno++;
 
-    outfile << "%t" << tempno << " = select i1 "<< "%t" <<tempno-1<< ", i32 " << res4 <<", i32 "<<a <<endl; //ig negative then res4 if not the one we select earlier
+    outfile << "%karber" << tempno << " = select i1 "<< "%karber" <<tempno-1<< ", i32 " << res4 <<", i32 "<<a <<endl; //ig negative then res4 if not the one we select earlier
     tempno++;
 
-    return "%t"+to_string(tempno-1);
+    return "%karber"+to_string(tempno-1);
 
 
 }
@@ -772,16 +772,16 @@ int main(int argc, char* argv[]) {
 
             //the below part is the writing part according the current statement type
             if(whil){ 
-                outfile<<"%t"<<tempno<<" = icmp ne i32 "<<res<<", 0"<<endl; 
-                outfile<<"br i1 %t"<<tempno<<", label %whbody"<<whileNo<<", label %whend"<<whileNo<<endl; 
+                outfile<<"%karber"<<tempno<<" = icmp ne i32 "<<res<<", 0"<<endl; 
+                outfile<<"br i1 %karber"<<tempno<<", label %whbody"<<whileNo<<", label %whend"<<whileNo<<endl; 
                 outfile<<endl;
                 outfile<<"whbody"<<whileNo<<":"<<endl;
                 tempno++;
             } else if(printSt){
                 outfile << "call i32 (i8*, ...)* @printf(i8* getelementptr ([4 x i8]* @print.str, i32 0, i32 0), i32 " << res<<" )"<<endl;
             } else if(ifSt){
-                outfile<<"%t"<<tempno<<" = icmp ne i32 "<<res<<", 0"<<endl;
-                outfile<<"br i1 %t"<<tempno<<", label %ifbody"<<ifNo<<", label %ifend"<<ifNo<<endl;
+                outfile<<"%karber"<<tempno<<" = icmp ne i32 "<<res<<", 0"<<endl;
+                outfile<<"br i1 %karber"<<tempno<<", label %ifbody"<<ifNo<<", label %ifend"<<ifNo<<endl;
                 outfile << endl;
                 outfile << "ifbody"<<ifNo<<":" << endl;
                 tempno++;
