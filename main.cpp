@@ -308,7 +308,7 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
 }
 bool isValidVariableName(string str){ //this function is used in the error handler function to determine if a token have a valid variable name
     str=whitespace(str);
-    if(str=="if" || str=="while" || str=="print" || str=="choose"){
+    if(str=="if" || str=="while" || str=="print"){
         return false;
     }
     if(str==""){
@@ -570,7 +570,7 @@ bool errorCatch(string line, bool inWhile ,bool inIf){ //this function checks if
         string right=line.substr(eq+1);
         bool leftBool=isValidVariableName(left);
         bool rightBool=errorCatchForExpressions(right);
-        if(leftBool&&rightBool){
+        if(leftBool&&rightBool&&whitespace(left)!="choose"){
             return true;
         } else {
             return false;
