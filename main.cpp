@@ -308,6 +308,9 @@ string choose(int& chooseno,string line,ofstream& outfile, vector<string> &vars,
 }
 bool isValidVariableName(string str){ //this function is used in the error handler function to determine if a token have a valid variable name
     str=whitespace(str);
+    if(str=="if" || str=="while" || str=="print" || str=="choose"){
+        return false;
+    }
     if(str==""){
         return false;
     }
