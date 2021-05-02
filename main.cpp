@@ -218,12 +218,12 @@ string muko(string expr,ofstream& outfile,int& tempno,vector<string> &vars,int c
             x1=whitespace(x1); 
             x2=whitespace(x2); 
 
-            if(x1.substr(0,6)=="choose"){
+            if(x1.substr(0,7)=="choose " || x1.substr(0,7)=="choose(" || x1.substr(0,7)=="choose\t"){
                 chooseno++;
                 x1=choose(chooseno,x1,outfile,vars,tempno);
             }
 
-            if(x2.substr(0,6)=="choose"){
+            if(x1.substr(0,7)=="choose " || x1.substr(0,7)=="choose(" || x1.substr(0,7)=="choose\t"){
                 chooseno++;
                 x2=choose(chooseno,x2,outfile,vars,tempno);
             }
